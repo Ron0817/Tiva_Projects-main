@@ -900,7 +900,7 @@ int main(void)
         // return 0;
     }
 
-    // re-write the register 0, according to the desired sampling rate
+    // re-write the register 0 to set ADC & MUX bias, according to the desired sampling rate
     Frequency_set(sampling_frequency_total);
     // check register 0 value
     if(register0_check(sampling_frequency_total) == 1){
