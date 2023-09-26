@@ -1,0 +1,1 @@
+"./ff.obj" "./main.obj" "./mmc-tm4c123g.obj" "./nrf24l01.obj" "./spi.obj" "./startup_ccs.obj" "./usb_structs.obj" "./usbconfig.obj" "./utils/uartstdio.obj" "./utils/ustdlib.obj" "../neural_recorder_PC_interface.cmd" -llibc.a -l"C:/ti/TivaWare_C_Series-1.1/driverlib/ccs/Debug/driverlib.lib" -l"C:/ti/TivaWare_C_Series-1.1/usblib/ccs/Debug/usblib.lib" 
