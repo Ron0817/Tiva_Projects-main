@@ -145,9 +145,7 @@ int main(void)
     // Set the System clock to 80MHz and enable the clock for peripheral PortF.
     SysCtlClockSet(SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
 
-    // Configure input for PF4(SW1) and PF0(SW2) - change to ROM function?
-//    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
-//    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);
+    // Configure input for PF4(SW1) and PF0(SW2)
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
     ROM_GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0);
 
@@ -157,7 +155,7 @@ int main(void)
     GPIOIntEnable(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0);
 
     // Connect PF0, PF4 to internal Pull-up resistors and set 2 mA as current strength.  - change to ROM function?
-    GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+    ROM_GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
 
     while (!stop)
     {
