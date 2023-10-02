@@ -260,8 +260,8 @@ int read_check(uint32_t address, uint32_t expected_value)
     SPI_Send((0b1100000000000000 | address), 0b0000000000000000);
 
     // collect the reading result
-    ROM_SSIDataGetNonBlocking(SSI0_BASE, &DataRx_check[1]);
-    ROM_SSIDataGetNonBlocking(SSI0_BASE, &DataRx_check[0]);
+    ROM_SSIDataGet(SSI0_BASE, &DataRx_check[1]);
+    ROM_SSIDataGet(SSI0_BASE, &DataRx_check[0]);
 
     if(! (DataRx_check[1] == 0x0000) ){
         return 0;
@@ -872,7 +872,7 @@ int main(void)
     }
 
     /***********************************************************/
-    /* Check the register values */
+    /* Check the headstage register values */
     /***********************************************************/
     if(headstage_init_check() == 1){
 #ifdef DEBUG
@@ -900,6 +900,9 @@ int main(void)
         // return 0;
     }
 
+    /***********************************************************/
+    /* Re-write some registers (0, 4, 5, 6) specifically and check them accordingly*/
+    /***********************************************************/
     // re-write the register 0 to set ADC & MUX bias, according to the desired sampling rate
     Frequency_set(sampling_frequency_total);
     // check register 0 value

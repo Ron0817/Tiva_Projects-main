@@ -4,7 +4,7 @@
 
 SHELL = cmd.exe
 
-CG_TOOL_ROOT := C:/ti/ccs1120/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS
+CG_TOOL_ROOT := D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS
 
 GEN_OPTS__FLAG := 
 GEN_CMDS__FLAG := 
@@ -142,7 +142,7 @@ all: nrf24l01_nrf52840_tx.out
 nrf24l01_nrf52840_tx.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: ARM Linker'
-	"C:/ti/ccs1120/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 --abi=eabi -me -O2 -g --gcc --define=ccs="ccs" --define=PART_TM4C123GH6PM --define=TARGET_IS_BLIZZARD_RB1 --diag_warning=225 --display_error_number --diag_wrap=off --gen_func_subsections=on --ual -z --stack_size=256 -m"project0_ccs.map" --heap_size=0 -i"C:/ti/ccs1120/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/lib" -i"C:/ti/ccs1120/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include" --reread_libs --warn_sections --display_error_number --diag_wrap=off --xml_link_info="nrf24l01_nrf52840_tx_linkInfo.xml" --rom_model -o "nrf24l01_nrf52840_tx.out" $(ORDERED_OBJS)
+	"D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 --abi=eabi -me -O2 -g --gcc --define=ccs="ccs" --define=PART_TM4C123GH6PM --define=TARGET_IS_BLIZZARD_RB1 --diag_warning=225 --display_error_number --diag_wrap=off --gen_func_subsections=on --ual -z --stack_size=256 -m"project0_ccs.map" --heap_size=0 -i"D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/lib" -i"D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --reread_libs --warn_sections --display_error_number --diag_wrap=off --xml_link_info="nrf24l01_nrf52840_tx_linkInfo.xml" --rom_model -o "nrf24l01_nrf52840_tx.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 	@$(MAKE) --no-print-directory post-build
@@ -156,7 +156,7 @@ clean:
 	-@echo ' '
 
 post-build:
-	-"C:/ti/ccs1120/ccs/utils/tiobj2bin/tiobj2bin" "nrf24l01_nrf52840_tx.out" "nrf24l01_nrf52840_tx.bin" "C:/ti/ccs1120/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/bin/armofd" "C:/ti/ccs1120/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/bin/armhex" "C:/ti/ccs1120/ccs/utils/tiobj2bin/mkhex4bin"
+	-"D:/ti/ccs1240/ccs/utils/tiobj2bin/tiobj2bin" "nrf24l01_nrf52840_tx.out" "nrf24l01_nrf52840_tx.bin" "D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armofd" "D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armhex" "D:/ti/ccs1240/ccs/utils/tiobj2bin/mkhex4bin"
 	-@echo ' '
 
 .PHONY: all clean dependents

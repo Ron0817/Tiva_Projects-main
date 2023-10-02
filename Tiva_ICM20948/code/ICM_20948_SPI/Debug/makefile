@@ -4,20 +4,19 @@
 
 SHELL = cmd.exe
 
-CG_TOOL_ROOT := C:/ti/ccs1120/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS
+CG_TOOL_ROOT := D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS
 
 GEN_OPTS__FLAG := 
 GEN_CMDS__FLAG := 
 
 ORDERED_OBJS += \
 "./main.obj" \
-"./nrf24l01.obj" \
 "./spi.obj" \
 "./startup_ccs.obj" \
 "./utils/cpu_usage.obj" \
 "./utils/uartstdio.obj" \
 "./utils/ustdlib.obj" \
-"../nrf24l01_driver.cmd" \
+"../hello_ccs.cmd" \
 $(GEN_CMDS__FLAG) \
 -llibc.a \
 -l"C:/ti/TivaWare_C_Series-1.1/driverlib/ccs/Debug/driverlib.lib" \
@@ -129,20 +128,20 @@ endif
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXE_OUTPUTS += \
-ICM_20948_v2.out \
+ICM_20948_SPI.out \
 
 EXE_OUTPUTS__QUOTED += \
-"ICM_20948_v2.out" \
+"ICM_20948_SPI.out" \
 
 
 # All Target
-all: ICM_20948_v2.out
+all: ICM_20948_SPI.out
 
 # Tool invocations
-ICM_20948_v2.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
+ICM_20948_SPI.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: ARM Linker'
-	"C:/ti/ccs1120/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 --abi=eabi -me -O2 -g --gcc --define=ccs="ccs" --define=PART_TM4C123GH6PM --define=TARGET_IS_BLIZZARD_RB1 --diag_warning=225 --display_error_number --diag_wrap=off --gen_func_subsections=on --ual -z --stack_size=256 -m"project0_ccs.map" --heap_size=0 -i"C:/ti/ccs1120/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/lib" -i"C:/ti/ccs1120/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include" --reread_libs --warn_sections --display_error_number --diag_wrap=off --xml_link_info="ICM_20948_v2_linkInfo.xml" --rom_model -o "ICM_20948_v2.out" $(ORDERED_OBJS)
+	"D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 --abi=eabi -me -O2 -g --gcc --define=ccs="ccs" --define=PART_TM4C123GH6PM --define=TARGET_IS_BLIZZARD_RB1 --diag_warning=225 --display_error_number --diag_wrap=off --gen_func_subsections=on --ual -z --stack_size=256 -m"project0_ccs.map" --heap_size=0 -i"D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/lib" -i"D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --reread_libs --warn_sections --display_error_number --diag_wrap=off --xml_link_info="ICM_20948_SPI_linkInfo.xml" --rom_model -o "ICM_20948_SPI.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 	@$(MAKE) --no-print-directory post-build
@@ -150,13 +149,13 @@ ICM_20948_v2.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 # Other Targets
 clean:
 	-$(RM) $(EXE_OUTPUTS__QUOTED)
-	-$(RM) "main.obj" "nrf24l01.obj" "spi.obj" "startup_ccs.obj" "utils\cpu_usage.obj" "utils\uartstdio.obj" "utils\ustdlib.obj" 
-	-$(RM) "main.d" "nrf24l01.d" "spi.d" "startup_ccs.d" "utils\cpu_usage.d" "utils\uartstdio.d" "utils\ustdlib.d" 
+	-$(RM) "main.obj" "spi.obj" "startup_ccs.obj" "utils\cpu_usage.obj" "utils\uartstdio.obj" "utils\ustdlib.obj" 
+	-$(RM) "main.d" "spi.d" "startup_ccs.d" "utils\cpu_usage.d" "utils\uartstdio.d" "utils\ustdlib.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 
 post-build:
-	-"C:/ti/ccs1120/ccs/utils/tiobj2bin/tiobj2bin" "ICM_20948_v2.out" "ICM_20948_v2.bin" "C:/ti/ccs1120/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/bin/armofd" "C:/ti/ccs1120/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/bin/armhex" "C:/ti/ccs1120/ccs/utils/tiobj2bin/mkhex4bin"
+	-"D:/ti/ccs1240/ccs/utils/tiobj2bin/tiobj2bin" "ICM_20948_SPI.out" "ICM_20948_SPI.bin" "D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armofd" "D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armhex" "D:/ti/ccs1240/ccs/utils/tiobj2bin/mkhex4bin"
 	-@echo ' '
 
 .PHONY: all clean dependents

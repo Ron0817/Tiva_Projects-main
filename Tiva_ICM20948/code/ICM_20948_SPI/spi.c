@@ -61,7 +61,7 @@ void SPIDataWrite(uint32_t ui32DataTx)
 }
 
 // function to write a byte to the SPI port
-uint32_t ICM_SPI_Write(uint32_t ui32Register, uint32_t ui32Value)
+void ICM_SPI_Write(uint32_t ui32Register, uint32_t ui32Value)
 {
     uint32_t ui32ResidualData;
     ROM_GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_2, 0);

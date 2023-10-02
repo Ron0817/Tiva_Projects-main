@@ -50,7 +50,7 @@ void SPISetCELow();
 void SPISetCEHigh();
 
 uint32_t ICM_SPI_Read(uint32_t ui32Register);
-uint32_t ICM_SPI_Write(uint32_t ui32Register, uint32_t ui32Value);
+void ICM_SPI_Write(uint32_t ui32Register, uint32_t ui32Value);
 
 
 #endif /* SPI_H_ */
