@@ -121,11 +121,10 @@ int main(void)
     ConfigureUART();
 
     // TODO: Put them in SPI_init()
-    /*SSI3 Signals:
-    PD0 -> SSI3CLK
-    PD2 -> SSI3RX (MISO)
-    PD3 -> SSI3TX (MOSI)
-     */
+    // SSI3 Signals:
+    // PD0 -> SSI3CLK
+    // PD2 -> SSI3RX (MISO)
+    // PD3 -> SSI3TX (MOSI)
     SPIInit();
     ROM_SysCtlDelay(SysCtlClockGet()); //lower diviser doesn't work properly
 
@@ -149,33 +148,25 @@ int main(void)
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
     ROM_GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0);
 
-    // Set up IRQ for handling interrupts
+    // Set up IRQ for PortF 4 |0
     GPIOIntRegister(GPIO_PORTF_BASE, GPIOPortFHandler);
     ROM_GPIOIntTypeSet(GPIO_PORTF_BASE,  GPIO_PIN_4 | GPIO_PIN_0, GPIO_FALLING_EDGE);
     GPIOIntEnable(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0);
 
-    // Connect PF0, PF4 to internal Pull-up resistors and set 2 mA as current strength.  - change to ROM function?
+    // Connect PF0, PF4 to internal Pull-up resistors and set 2 mA as current strength.
     ROM_GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
 
     while (!stop)
     {
-        UARTprintf(" in loop \n");
+        // TODO: Put them in read_accel()
+        // Read Accel X-axis
+        ret = ICM_SPI_Read(0x2D) << 8;
+        UARTprintf("accel_x_hi = 0x%x\n",ret);
+        ret = ICM_SPI_Read(0x2E);
+        UARTprintf("accel_x_lo = 0x%x\n",ret);
+        ROM_SysCtlDelay(SysCtlClockGet() / 10);
         ROM_SysCtlDelay(SysCtlClockGet() / 5);
     }
-
-    // Change to while(!stop) pushbutton interrupt
-//    while (1)
-//    {
-//        // TODO: Put them in read_accel()
-//        // Read Accel X-axis
-//        ret = ICM_SPI_Read(0x2D) << 8;
-//        UARTprintf("accel_x_hi = 0x%x\n",ret);
-//        ret = ICM_SPI_Read(0x2E);
-//        UARTprintf("accel_x_lo = 0x%x\n",ret);
-//        ROM_SysCtlDelay(SysCtlClockGet() / 10);
-//    }
-
-
 
     UARTprintf("Done\n");
 
