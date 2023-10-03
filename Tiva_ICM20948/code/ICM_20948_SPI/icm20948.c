@@ -38,7 +38,8 @@ void icm20948_init()
 //    icm20948_odr_align_enable();
 
     icm20948_spi_slave_enable();
-//
+
+    // Cannot even read it
 //    icm20948_gyro_low_pass_filter(0);
 //    icm20948_accel_low_pass_filter(0);
 //
@@ -247,10 +248,17 @@ void icm20948_odr_align_enable()
 
 void icm20948_gyro_low_pass_filter(uint32_t config)
 {
-    uint8_t new_val = read_single_icm20948_reg(2, B2_GYRO_CONFIG_1);
-    new_val |= config << 3;
+    uint8_t new_val = 0x00;
 
-    write_single_icm20948_reg(2, B2_GYRO_CONFIG_1, new_val);
+//    ICM_SPI_Write(0x7F, 2 << 4);
+//    new_val = ICM_SPI_Read(B2_GYRO_CONFIG_1);
+//    new_val = read_single_icm20948_reg(2, B2_GYRO_CONFIG_1);
+//    UARTprintf("old gyro_config_1 reg val is %x\n", new_val);
+//
+//    new_val |= config << 3;
+//
+//    write_single_icm20948_reg(2, B2_GYRO_CONFIG_1, new_val);
+//    UARTprintf("CHECK: new gyro_config_1 reg val is %x\n", ICM_SPI_Read(B2_GYRO_CONFIG_1));
 }
 
 void icm20948_accel_low_pass_filter(uint32_t config)
