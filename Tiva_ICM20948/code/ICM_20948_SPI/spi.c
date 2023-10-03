@@ -57,7 +57,7 @@ void SPIInit(void)
 // function to write a byte to the SPI port
 void SPIDataWrite(uint32_t ui32DataTx)
 {
-    ROM_SSIDataPut(SPI_BASE, ui32DataTx);
+    ROM_SSIDataPut(SPI_BASE, (uint8_t)ui32DataTx);
 }
 
 // function to write a byte to the SPI port
