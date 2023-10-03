@@ -15,6 +15,14 @@
 
 
 #include "spi.h"
+#include "inc/hw_memmap.h"
+#include "inc/hw_gpio.h"
+#include "driverlib/gpio.h"
+#include "driverlib/pin_map.h"
+#include "driverlib/rom.h"
+#include "driverlib/sysctl.h"
+#include "driverlib/uart.h"
+#include "utils/uartstdio.h"
 /* Associate to Tiva Tm4c123gxl pin map */
 #define ICM20948_SPI_CS_PIN_NUMBER (GPIO_PIN_2)
 #define ICM20948_SPI_CS_PIN_PORT (GPIO_PORTB_BASE)
@@ -170,14 +178,40 @@
 #define MAG_TS1                         0x33
 #define MAG_TS2                         0x34
 
+#define READ                            0x80
+#define WRITE                           0x00
+
+/* Typedefs */
+typedef enum
+{
+    _250dps,
+    _500dps,
+    _1000dps,
+    _2000dps
+} gyro_full_scale;
+
+typedef enum
+{
+    _2g,
+    _4g,
+    _8g,
+    _16g
+} accel_full_scale;
+
+typedef struct
+{
+    float x;
+    float y;
+    float z;
+} axises;
 // sensor init function.
 // if sensor id is wrong, it is stuck in while.
 void icm20948_init();
-//
-//// 16 bits ADC value. raw data.
-//void icm20948_gyro_read(axises* data);
-//void icm20948_accel_read(axises* data);
-//
+
+// 16 bits ADC value. raw data.
+void icm20948_gyro_read(axises* data);
+void icm20948_accel_read(axises* data);
+
 //// Convert 16 bits ADC value to their unit.
 //void icm20948_gyro_read_dps(axises* data);
 //void icm20948_accel_read_g(axises* data);
@@ -187,28 +221,28 @@ void icm20948_init();
 uint32_t read_single_icm20948_reg(int ub, uint32_t reg);
 void write_single_icm20948_reg(int ub, uint32_t reg, uint32_t val);
 uint32_t icm20948_who_am_i();
-//void icm20948_device_reset();
-//void icm20948_wakeup();
+void icm20948_device_reset();
+void icm20948_wakeup();
 //void icm20948_sleep();
 //
-//void icm20948_spi_slave_enable();
+void icm20948_spi_slave_enable();
 //
 //void icm20948_i2c_master_reset();
 //void icm20948_i2c_master_enable();
 //void icm20948_i2c_master_clk_frq(uint8_t config); // 0 - 15
-//
-//void icm20948_clock_source(uint8_t source);
-//void icm20948_odr_align_enable();
-//
-//void icm20948_gyro_low_pass_filter(uint8_t config); // 0 - 7
-//void icm20948_accel_low_pass_filter(uint8_t config); // 0 - 7
-//
-//// Output Data Rate = 1.125kHz / (1 + divider)
-//void icm20948_gyro_sample_rate_divider(uint8_t divider);
-//void icm20948_accel_sample_rate_divider(uint16_t divider);
-//
-//// Calibration before select full scale.
-//void icm20948_gyro_calibration();
+
+void icm20948_clock_source(uint32_t source);
+void icm20948_odr_align_enable();
+
+void icm20948_gyro_low_pass_filter(uint32_t config); // 0 - 7
+void icm20948_accel_low_pass_filter(uint32_t config); // 0 - 7
+
+// Output Data Rate = 1.125kHz / (1 + divider)
+void icm20948_gyro_sample_rate_divider(uint32_t divider);
+void icm20948_accel_sample_rate_divider(uint32_t divider);
+
+// Calibration before select full scale.
+void icm20948_gyro_calibration();
 //void icm20948_accel_calibration();
 //
 //void icm20948_gyro_full_scale_select(gyro_full_scale full_scale);

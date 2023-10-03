@@ -43,8 +43,8 @@ void SPIInit(void)
 	//Configure and enable SSI port
 	// Use internal 16Mhz RC oscillator as SSI clock source
 	ROM_SSIClockSourceSet(SPI_BASE, SSI_CLOCK_PIOSC);
-	ROM_SSIConfigSetExpClk(SPI_BASE, 16000000, SSI_FRF_MOTO_MODE_0,
-						SSI_MODE_MASTER, 8000000, 8);
+	ROM_SSIConfigSetExpClk(SPI_BASE, 4000000, SSI_FRF_MOTO_MODE_0,
+						SSI_MODE_MASTER, 2000000, 8);
 	ROM_SSIEnable(SPI_BASE);
 
 	// Read any residual data on the SSI port to clear buffer

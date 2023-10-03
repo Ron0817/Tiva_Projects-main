@@ -99,6 +99,7 @@ void GPIOPortFHandler(void)
 }
 
 /* -----------------------          Main Program        --------------------- */
+// Add if #debug tag to all uartprintf()
 int main(void)
 {
     uint32_t i;
@@ -120,6 +121,7 @@ int main(void)
 
     // configure UART for console operation
     ConfigureUART();
+    UARTprintf("UART was configured. Let's start\n");
 
     // TODO: Put them in SPI_init()
     /* -----------------------          SPI init        --------------------- */
@@ -152,20 +154,23 @@ int main(void)
     ROM_GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
 
     /* -----------------------          Accel and Gyro init        --------------------- */
-
+    icm20948_init();
 
     /* -----------------------          ICM communication check        --------------------- */
-    // delete
-//    write_single_icm20948_reg(0, REG_BANK_SEL, 2 << 4);
-//    UARTprintf("Select user bank 2\n");
-//    ret = read_single_icm20948_reg(2, 0x7F);
-//    UARTprintf("user bank is %x\n", ret);
-
     // Read Who am I reg
     ret = icm20948_who_am_i();
-    UARTprintf("ICM20948 0xea == 0x%x?\n", ret);
-    ret = read_single_icm20948_reg(0, B0_WHO_AM_I);
-    UARTprintf("ICM20948 0xea == 0x%x?\n", ret);
+    UARTprintf("ICM20948 is 0xea ? -> 0x%x\n", ret);
+//    to delete
+//    ICM_SPI_Write(0x7F, 2<<4);
+//
+//    ret = ICM_SPI_Read(0);
+//    UARTprintf("ub2 reg0 = 0x%x\n", ret);
+//
+//    ICM_SPI_Write(0x7F, 0<<4);
+//
+//    ret = ICM_SPI_Read(0);
+//    UARTprintf("back to ub0 reg0 = 0x%x\n", ret);
+
     while (!stop)
     {
         // TODO: Put them in read_accel()
