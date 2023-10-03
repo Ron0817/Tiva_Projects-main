@@ -154,13 +154,10 @@ int main(void)
     ROM_GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
 
     /* -----------------------          Accel and Gyro init        --------------------- */
-//    icm20948_init();
-
-    /* -----------------------          ICM communication check        --------------------- */
-    // Read Who am I reg
-//    ret = icm20948_who_am_i();
-    ret = ICM_SPI_Read(0);
+    ret = icm20948_who_am_i();
     UARTprintf("ICM20948 is 0xea ? -> 0x%x\n", ret);
+    icm20948_init();
+
 //    to delete
 //    ICM_SPI_Write(0x7F, 2<<4);
 //
@@ -172,20 +169,20 @@ int main(void)
 //    ret = ICM_SPI_Read(0);
 //    UARTprintf("back to ub0 reg0 = 0x%x\n", ret);
 //
-    ret = ICM_SPI_Read(0x06);
-    UARTprintf("wakeup x= 0x%x\n", ret);
-
-    ICM_SPI_Write(0x06, 0x01);
-    ret = ICM_SPI_Read(0x06);
-    UARTprintf("wakeup 01= 0x%x\n", ret);
-
-    ICM_SPI_Write(0x06, 0x40);
-    ret = ICM_SPI_Read(0x06);
-    UARTprintf("wakeup 40= 0x%x\n", ret);
-
-    ICM_SPI_Write(0x06, 0x01);
-    ret = ICM_SPI_Read(0x06);
-    UARTprintf("wakeup 01= 0x%x\n", ret);
+//    ret = ICM_SPI_Read(0x06);
+//    UARTprintf("wakeup x= 0x%x\n", ret);
+//
+//    ICM_SPI_Write(0x06, 0x01);
+//    ret = ICM_SPI_Read(0x06);
+//    UARTprintf("wakeup 01= 0x%x\n", ret);
+//
+//    ICM_SPI_Write(0x06, 0x40);
+//    ret = ICM_SPI_Read(0x06);
+//    UARTprintf("wakeup 40= 0x%x\n", ret);
+//
+//    ICM_SPI_Write(0x06, 0x01);
+//    ret = ICM_SPI_Read(0x06);
+//    UARTprintf("wakeup 01= 0x%x\n", ret);
 //
 //    ret = ICM_SPI_Read(0x06);
 //    UARTprintf("wakeup 41= 0x%x\n", ret);

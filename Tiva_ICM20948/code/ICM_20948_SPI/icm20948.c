@@ -175,16 +175,17 @@ void icm20948_device_reset()
 
 void icm20948_wakeup()
 {
-    uint32_t new_val = read_single_icm20948_reg(0, B0_PWR_MGMT_1);
-//    new_val &= 0xBF;
-    new_val = 0x41;
-    UARTprintf("WAKE UP New val is %x\n", new_val);
-    ICM_SPI_Write(B0_PWR_MGMT_1, 0x41);
-//    write_single_icm20948_reg(0, B0_PWR_MGMT_1, new_val);
+    uint32_t new_val = 0x01;
 
+    //  Must have UARTprintf first. Why?
+    UARTprintf("wake up val is %x\n", new_val);
+
+    //  Set CLKSEL 0x01 to allow full gyro performance
+    ICM_SPI_Write(B0_PWR_MGMT_1, new_val);
+
+    // Confirm correct val. To be deleted
     new_val = ICM_SPI_Read(B0_PWR_MGMT_1);
-//    new_val = read_single_icm20948_reg(0, B0_PWR_MGMT_1);
-    UARTprintf("WAKE UP New val is %x\n", new_val);
+    UARTprintf("CHECK: WAKE UP NEW VAL is %x\n", new_val);
 
     ROM_SysCtlDelay(SysCtlClockGet());
 }
