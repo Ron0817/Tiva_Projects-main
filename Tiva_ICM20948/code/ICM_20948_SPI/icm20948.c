@@ -34,11 +34,10 @@ void icm20948_init()
     icm20948_device_reset();
     icm20948_wakeup();
 
-    // Set clock source to 1 to allow full gyroscope performance
 //    icm20948_clock_source(1);
 //    icm20948_odr_align_enable();
 
-//    icm20948_spi_slave_enable();
+    icm20948_spi_slave_enable();
 //
 //    icm20948_gyro_low_pass_filter(0);
 //    icm20948_accel_low_pass_filter(0);
@@ -166,7 +165,7 @@ void icm20948_device_reset()
     // Reset sleep mode. Set clock source to auto-select
     write_single_icm20948_reg(0, B0_PWR_MGMT_1, 0x80 | 0x41);
 }
-//
+
 //void ak09916_soft_reset()
 //{
 //    write_single_ak09916_reg(MAG_CNTL3, 0x01);
@@ -185,9 +184,9 @@ void icm20948_wakeup()
 
     // Confirm correct val. To be deleted
     new_val = ICM_SPI_Read(B0_PWR_MGMT_1);
-    UARTprintf("CHECK: WAKE UP NEW VAL is %x\n", new_val);
+    UARTprintf("CHECK: WAKE UP NEW VAL is 0x01? -> 0x%x\n", new_val);
 
-    ROM_SysCtlDelay(SysCtlClockGet());
+    ROM_SysCtlDelay(SysCtlClockGet()/10);
 }
 
 //void icm20948_sleep()
@@ -201,17 +200,12 @@ void icm20948_wakeup()
 
 void icm20948_spi_slave_enable()
 {
-    ICM_SPI_Write(0x7F, 0);
-    uint32_t new_val = ICM_SPI_Read(B0_USER_CTRL);
+    uint32_t new_val = 0x10;
 
     // Set I2C_IF_DIS bit = 1 to allow SPI only
-    new_val |= 0x10;
-    UARTprintf("New val is %x\n", new_val);
-
-//    write_single_icm20948_reg(0, B0_USER_CTRL, new_val);
+    ICM_SPI_Write(0x7F, 0);
     ICM_SPI_Write(B0_USER_CTRL, new_val);
-    new_val = ICM_SPI_Read(B0_USER_CTRL);
-    UARTprintf("NOW new user-ctrl val is %x\n", new_val);
+    UARTprintf("CHECK: new spi_slave_enable val is 0x10? -> 0x%x\n", ICM_SPI_Read(B0_USER_CTRL));
 }
 
 //void icm20948_i2c_master_reset()
@@ -239,18 +233,16 @@ void icm20948_spi_slave_enable()
 //    write_single_icm20948_reg(ub_3, B3_I2C_MST_CTRL, new_val);
 //}
 
-void icm20948_clock_source(uint32_t source)
-{
-    uint32_t new_val = read_single_icm20948_reg(0, B0_PWR_MGMT_1);
-    new_val |= source;
-
-    write_single_icm20948_reg(0, B0_PWR_MGMT_1, new_val);
-}
+//void icm20948_clock_source(uint32_t source)
+//{
+//    uint32_t new_val = read_single_icm20948_reg(0, B0_PWR_MGMT_1);
+//    UARTprintf("CHECK CLKSET source = 0x%x\n", new_val);
+//}
 
 void icm20948_odr_align_enable()
 {
-    write_single_icm20948_reg(2, B2_ODR_ALIGN_EN, 0x01);
-    UARTprintf("NOW ord align en val is %x\n", ICM_SPI_Read(0x09));
+   write_single_icm20948_reg(2, B2_ODR_ALIGN_EN, 0x01);
+   UARTprintf("CHECK: new ord align en val is %x\n", ICM_SPI_Read(0x09));
 }
 
 void icm20948_gyro_low_pass_filter(uint32_t config)
