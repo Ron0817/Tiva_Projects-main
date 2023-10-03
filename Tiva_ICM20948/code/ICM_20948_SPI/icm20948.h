@@ -184,6 +184,8 @@ void icm20948_init();
 
 
 /* Sub Functions */
+uint32_t read_single_icm20948_reg(int ub, uint32_t reg);
+void write_single_icm20948_reg(int ub, uint32_t reg, uint32_t val);
 uint32_t icm20948_who_am_i();
 //void icm20948_device_reset();
 //void icm20948_wakeup();

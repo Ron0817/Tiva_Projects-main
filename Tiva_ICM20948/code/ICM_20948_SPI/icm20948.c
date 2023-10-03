@@ -25,8 +25,8 @@ static void     cs_low();
 
 static void     select_user_bank(int ub);
 
-static uint32_t  read_single_icm20948_reg(int ub, uint32_t reg);
-static void     write_single_icm20948_reg(int ub, uint32_t reg, uint32_t val);
+//static uint32_t  read_single_icm20948_reg(int ub, uint32_t reg);
+//static void     write_single_icm20948_reg(int ub, uint32_t reg, uint32_t val);
 //static uint32_t* read_multiple_icm20948_reg(userbank ub, uint8_t reg, uint8_t len);
 //static void     write_multiple_icm20948_reg(userbank ub, uint8_t reg, uint8_t* val, uint8_t len);
 //
@@ -36,10 +36,8 @@ static void     write_single_icm20948_reg(int ub, uint32_t reg, uint32_t val);
 
 
 /* Main Functions */
-//void icm20948_init()
-//{
-//    while(!icm20948_who_am_i());
-//
+void icm20948_init()
+{
 //    icm20948_device_reset();
 //    icm20948_wakeup();
 //
@@ -59,8 +57,8 @@ static void     write_single_icm20948_reg(int ub, uint32_t reg, uint32_t val);
 //
 //    icm20948_gyro_full_scale_select(_2000dps);
 //    icm20948_accel_full_scale_select(_16g);
-//}
-//
+}
+
 //void ak09916_init()
 //{
 //    icm20948_i2c_master_reset();
@@ -163,7 +161,6 @@ uint32_t icm20948_who_am_i()
 //void icm20948_device_reset()
 //{
 //    write_single_icm20948_reg(ub_0, B0_PWR_MGMT_1, 0x80 | 0x41);
-//    HAL_Delay(100);
 //}
 //
 //void ak09916_soft_reset()
@@ -433,7 +430,8 @@ static void select_user_bank(int ub)
     ICM_SPI_Write(REG_BANK_SEL, ub << 4);
 }
 
-static uint32_t read_single_icm20948_reg(int ub, uint32_t reg)
+// Remove static to expand scope - otherwise unresolved symbols error
+uint32_t read_single_icm20948_reg(int ub, uint32_t reg)
 {
     uint32_t reg_val;
     select_user_bank(ub);
@@ -444,20 +442,16 @@ static uint32_t read_single_icm20948_reg(int ub, uint32_t reg)
 
     return reg_val;
 }
-//
-//static void write_single_icm20948_reg(userbank ub, uint8_t reg, uint8_t val)
-//{
-//    uint8_t write_reg[2];
-//    write_reg[0] = WRITE | reg;
-//    write_reg[1] = val;
-//
-//    select_user_bank(ub);
-//
-//    cs_low();
-//    HAL_SPI_Transmit(ICM20948_SPI, write_reg, 2, 1000);
-//    cs_high();
-//}
-//
+
+void write_single_icm20948_reg(int ub, uint32_t reg, uint32_t val)
+{
+    select_user_bank(ub);
+
+    cs_low();
+    ICM_SPI_Write(reg, val);
+    cs_high();
+}
+
 //static uint8_t* read_multiple_icm20948_reg(userbank ub, uint8_t reg, uint8_t len)
 //{
 //    uint8_t read_reg = READ | reg;

@@ -155,14 +155,17 @@ int main(void)
 
 
     /* -----------------------          ICM communication check        --------------------- */
-    // Select User Bank 0
-    ICM_SPI_Write(REG_BANK_SEL, 2 << 4);
-    UARTprintf("Select user bank 0\n");
+    // delete
+//    write_single_icm20948_reg(0, REG_BANK_SEL, 2 << 4);
+//    UARTprintf("Select user bank 2\n");
+//    ret = read_single_icm20948_reg(2, 0x7F);
+//    UARTprintf("user bank is %x\n", ret);
 
     // Read Who am I reg
     ret = icm20948_who_am_i();
-    UARTprintf("ICM20948 0xea == 0x%x?\n",ret);
-
+    UARTprintf("ICM20948 0xea == 0x%x?\n", ret);
+    ret = read_single_icm20948_reg(0, B0_WHO_AM_I);
+    UARTprintf("ICM20948 0xea == 0x%x?\n", ret);
     while (!stop)
     {
         // TODO: Put them in read_accel()
