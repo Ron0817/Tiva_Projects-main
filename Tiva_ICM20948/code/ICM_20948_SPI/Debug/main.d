@@ -26,6 +26,7 @@ main.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/ssi.h
 main.obj: C:/ti/TivaWare_C_Series-1.1/utils/uartstdio.h
 main.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdarg.h
 main.obj: ../spi.h
+main.obj: ../icm20948.h
 
 ../main.c:
 
@@ -78,4 +79,6 @@ C:/ti/TivaWare_C_Series-1.1/utils/uartstdio.h:
 D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdarg.h:
 
 ../spi.h:
+
+../icm20948.h:
 

@@ -13,6 +13,7 @@
 #include "driverlib/ssi.h"
 #include "utils/uartstdio.h"
 #include "spi.h"
+#include "icm20948.h"
 
 /* -----------------------          Define Macros       --------------------- */
 // Defind Max ui32TxBuffer size
@@ -121,6 +122,7 @@ int main(void)
     ConfigureUART();
 
     // TODO: Put them in SPI_init()
+    /* -----------------------          SPI init        --------------------- */
     // SSI3 Signals:
     // PD0 -> SSI3CLK
     // PD2 -> SSI3RX (MISO)
@@ -128,14 +130,7 @@ int main(void)
     SPIInit();
     ROM_SysCtlDelay(SysCtlClockGet()); //lower diviser doesn't work properly
 
-    // Select User Bank 0
-    ICM_SPI_Write(0x7F, 0 << 4);
-    UARTprintf("Select user bank 0\n");
-
-    // Read Who am I reg
-    ret = ICM_SPI_Read(0x0);
-    UARTprintf("ICM20948 0xea == 0x%x?\n",ret);
-
+    /* -----------------------          Pushbutton Interrupt Init        --------------------- */
     // TODO: Put in SW_int_init()
     // Remove the Lock present on Switch SW2 (connected to PF0) and commit the change
     HWREG(GPIO_PORTF_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY;
@@ -156,6 +151,18 @@ int main(void)
     // Connect PF0, PF4 to internal Pull-up resistors and set 2 mA as current strength.
     ROM_GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
 
+    /* -----------------------          Accel and Gyro init        --------------------- */
+
+
+    /* -----------------------          ICM communication check        --------------------- */
+    // Select User Bank 0
+    ICM_SPI_Write(REG_BANK_SEL, 2 << 4);
+    UARTprintf("Select user bank 0\n");
+
+    // Read Who am I reg
+    ret = icm20948_who_am_i();
+    UARTprintf("ICM20948 0xea == 0x%x?\n",ret);
+
     while (!stop)
     {
         // TODO: Put them in read_accel()
@@ -164,7 +171,6 @@ int main(void)
         UARTprintf("accel_x_hi = 0x%x\n",ret);
         ret = ICM_SPI_Read(0x2E);
         UARTprintf("accel_x_lo = 0x%x\n",ret);
-        ROM_SysCtlDelay(SysCtlClockGet() / 10);
         ROM_SysCtlDelay(SysCtlClockGet() / 5);
     }
 
