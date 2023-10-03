@@ -46,7 +46,7 @@ void icm20948_init()
 //    icm20948_gyro_sample_rate_divider(0);
 //    icm20948_accel_sample_rate_divider(0);
 
-//    icm20948_gyro_calibration();
+    icm20948_gyro_calibration();
 //    icm20948_accel_calibration();
 //
 //    icm20948_gyro_full_scale_select(_2000dps);
@@ -79,8 +79,6 @@ void icm20948_gyro_read(axises* data)
     data->x = (int16_t)(temp[0] << 8 | temp[1]);
     data->y = (int16_t)(temp[2] << 8 | temp[3]);
     data->z = (int16_t)(temp[4] << 8 | temp[5]);
-
-    UARTprintf("gyro_read x, y, z = %x, %x, %x\n",data->x, data->y, data->z);
 }
 
 void icm20948_accel_read(axises* data)
@@ -304,30 +302,29 @@ void icm20948_gyro_calibration()
         gyro_bias[2] += temp.z;
     }
 
-//    gyro_bias[0] /= 100;
-//    gyro_bias[1] /= 100;
-//    gyro_bias[2] /= 100;
-//    // Construct the gyro biases for push to the hardware gyro bias registers,
-//    // which are reset to zero upon device startup.
-//    // Divide by 4 to get 32.9 LSB per deg/s to conform to expected bias input format.
-//    // Biases are additive, so change sign on calculated average gyro biases
-//    gyro_offset[0] = (-gyro_bias[0] / 4  >> 8) & 0xFF;
-//    gyro_offset[1] = (-gyro_bias[0] / 4)       & 0xFF;
-//    gyro_offset[2] = (-gyro_bias[1] / 4  >> 8) & 0xFF;
-//    gyro_offset[3] = (-gyro_bias[1] / 4)       & 0xFF;
-//    gyro_offset[4] = (-gyro_bias[2] / 4  >> 8) & 0xFF;
-//    gyro_offset[5] = (-gyro_bias[2] / 4)       & 0xFF;
-//
-////    write_multiple_icm20948_reg(2, B2_XG_OFFS_USRH, gyro_offset, 6);
-//    write_single_icm20948_reg(2, B2_XG_OFFS_USRH, gyro_offset[0]);
-//    write_single_icm20948_reg(2, B2_XG_OFFS_USRL, gyro_offset[1]);
-//
-//    write_single_icm20948_reg(2, B2_YG_OFFS_USRH, gyro_offset[2]);
-//    write_single_icm20948_reg(2, B2_YG_OFFS_USRL, gyro_offset[3]);
-//
-//    write_single_icm20948_reg(2, B2_ZG_OFFS_USRH, gyro_offset[4]);
-//    write_single_icm20948_reg(2, B2_ZG_OFFS_USRL, gyro_offset[5]);
+    gyro_bias[0] /= 100;
+    gyro_bias[1] /= 100;
+    gyro_bias[2] /= 100;
+    UARTprintf("CHECK: Gryo bias (x, y, z) is (%d, %d, %d)\n", gyro_bias[0], gyro_bias[1], gyro_bias[2]);
+    // Construct the gyro biases for push to the hardware gyro bias registers,
+    // which are reset to zero upon device startup.
+    // Divide by 4 to get 32.9 LSB per deg/s to conform to expected bias input format.
+    // Biases are additive, so change sign on calculated average gyro biases
+    gyro_offset[0] = (-gyro_bias[0] / 4  >> 8) & 0xFF;
+    gyro_offset[1] = (-gyro_bias[0] / 4)       & 0xFF;
+    gyro_offset[2] = (-gyro_bias[1] / 4  >> 8) & 0xFF;
+    gyro_offset[3] = (-gyro_bias[1] / 4)       & 0xFF;
+    gyro_offset[4] = (-gyro_bias[2] / 4  >> 8) & 0xFF;
+    gyro_offset[5] = (-gyro_bias[2] / 4)       & 0xFF;
 
+    write_single_icm20948_reg(2, B2_XG_OFFS_USRH, gyro_offset[0]);
+    write_single_icm20948_reg(2, B2_XG_OFFS_USRL, gyro_offset[1]);
+
+    write_single_icm20948_reg(2, B2_YG_OFFS_USRH, gyro_offset[2]);
+    write_single_icm20948_reg(2, B2_YG_OFFS_USRL, gyro_offset[3]);
+
+    write_single_icm20948_reg(2, B2_ZG_OFFS_USRH, gyro_offset[4]);
+    write_single_icm20948_reg(2, B2_ZG_OFFS_USRL, gyro_offset[5]);
 }
 
 //void icm20948_accel_calibration()

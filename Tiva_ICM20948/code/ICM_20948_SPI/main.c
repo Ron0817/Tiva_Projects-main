@@ -187,7 +187,7 @@ int main(void)
 //    ret = ICM_SPI_Read(0x06);
 //    UARTprintf("wakeup 41= 0x%x\n", ret);
 //
-
+    ICM_SPI_Write(0x7F, 0 << 4);
     while (!stop)
     {
         // TODO: Put them in read_accel()
