@@ -17,16 +17,9 @@ static float accel_scale_factor;
 
 void     cs_high();
 void     cs_low();
-
 static void     select_user_bank(int ub);
-
 //static uint32_t* read_multiple_icm20948_reg(int ub, uint8_t reg, uint8_t len);
 //static void     write_multiple_icm20948_reg(int ub, uint8_t reg, uint8_t* val, uint8_t len);
-//
-//static uint32_t  read_single_ak09916_reg(uint8_t reg);
-//static void     write_single_ak09916_reg(uint8_t reg, uint8_t val);
-//static uint32_t* read_multiple_ak09916_reg(uint8_t reg, uint8_t len);
-
 
 /* Main Functions */
 void icm20948_init()
@@ -40,8 +33,8 @@ void icm20948_init()
     icm20948_spi_slave_enable();
 
     // Cannot even read it
-    icm20948_gyro_low_pass_filter(0);
-    icm20948_accel_low_pass_filter(0);
+    icm20948_gyro_low_pass_filter(1);
+    icm20948_accel_low_pass_filter(1);
 
     icm20948_gyro_sample_rate_divider(0);
     icm20948_accel_sample_rate_divider(0);
@@ -49,8 +42,8 @@ void icm20948_init()
     icm20948_gyro_calibration();
     icm20948_accel_calibration();
 
-    icm20948_gyro_full_scale_select(_2000dps);
-    icm20948_accel_full_scale_select(_16g);
+    icm20948_gyro_full_scale_select(_250dps);
+    icm20948_accel_full_scale_select(_2g);
 }
 
 void icm20948_gyro_read(axises* data)
@@ -95,15 +88,15 @@ void icm20948_gyro_read_dps(axises* data)
     data->y = (float) (data->y / gyro_scale_factor);
     data->z = (float) (data->z / gyro_scale_factor);
 }
-//
-//void icm20948_accel_read_g(axises* data)
-//{
-//    icm20948_accel_read(data);
-//
-//    data->x /= accel_scale_factor;
-//    data->y /= accel_scale_factor;
-//    data->z /= accel_scale_factor;
-//}
+
+void icm20948_accel_read_g(axises* data)
+{
+    icm20948_accel_read(data);
+
+    data->x /= accel_scale_factor;
+    data->y /= accel_scale_factor;
+    data->z /= accel_scale_factor;
+}
 
 /* Sub Functions */
 uint32_t icm20948_who_am_i()

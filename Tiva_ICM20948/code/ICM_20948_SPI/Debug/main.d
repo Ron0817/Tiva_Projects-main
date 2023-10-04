@@ -11,6 +11,9 @@ main.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/sys/_ty
 main.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_types.h
 main.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_stdint.h
 main.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/sys/_stdint.h
+main.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdio.h
+main.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdarg.h
+main.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdlib.h
 main.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdbool.h
 main.obj: C:/ti/TivaWare_C_Series-1.1/inc/hw_types.h
 main.obj: C:/ti/TivaWare_C_Series-1.1/inc/hw_memmap.h
@@ -24,7 +27,6 @@ main.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/interrupt.h
 main.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/rom.h
 main.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/ssi.h
 main.obj: C:/ti/TivaWare_C_Series-1.1/utils/uartstdio.h
-main.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdarg.h
 main.obj: ../spi.h
 main.obj: ../icm20948.h
 
@@ -49,6 +51,12 @@ D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_types.h:
 D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_stdint.h:
 
 D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/sys/_stdint.h:
+
+D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdio.h:
+
+D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdarg.h:
+
+D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdlib.h:
 
 D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdbool.h:
 
@@ -75,8 +83,6 @@ C:/ti/TivaWare_C_Series-1.1/driverlib/rom.h:
 C:/ti/TivaWare_C_Series-1.1/driverlib/ssi.h:
 
 C:/ti/TivaWare_C_Series-1.1/utils/uartstdio.h:
-
-D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdarg.h:
 
 ../spi.h:
 

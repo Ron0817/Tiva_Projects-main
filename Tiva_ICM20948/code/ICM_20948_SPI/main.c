@@ -1,4 +1,6 @@
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include "inc/hw_types.h"
 #include "inc/hw_memmap.h"
@@ -106,6 +108,15 @@ int main(void)
     uint32_t ret;
     uint32_t accel_x_hi;
     axises gyro_axises;
+    axises accel_axises;
+
+    // To be deleted
+    float gyro_x;
+    float gyro_y;
+    float gyro_z;
+    float accel_x;
+    float accel_y;
+    float accel_z;
 
     // Setup the system clock to run at 50 Mhz from PLL with external oscillator
     ROM_SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
@@ -114,7 +125,6 @@ int main(void)
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
     ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);
     ROM_GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0);
-
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
 
     // Configure PB2 as an output pin.
@@ -124,7 +134,6 @@ int main(void)
     ConfigureUART();
     UARTprintf("UART was configured. Let's start\n");
 
-    // TODO: Put them in SPI_init()
     /* -----------------------          SPI init        --------------------- */
     // SSI3 Signals:
     // PD0 -> SSI3CLK
@@ -159,6 +168,9 @@ int main(void)
     UARTprintf("ICM20948 is 0xea ? -> 0x%x\n", ret);
     icm20948_init();
 
+    UARTprintf("Init check done. Start Reading ...\n");
+    ROM_SysCtlDelay(SysCtlClockGet());
+
 //    to delete
 //    ICM_SPI_Write(0x7F, 2<<4);
 //
@@ -188,20 +200,43 @@ int main(void)
 //    ret = ICM_SPI_Read(0x06);
 //    UARTprintf("wakeup 41= 0x%x\n", ret);
 
-    UARTprintf("Init check done. Start Reading ...\n");
-    ROM_SysCtlDelay(SysCtlClockGet()); //lower diviser doesn't work properly
-
+    char strx[10];
+    char stry[10];
+    char strz[10];
     while (!stop)
     {
         // TODO: Put them in read_accel()
-        // Read Accel X-axis
-//        ICM_SPI_Write(0x7F, 0 << 4);
-//        ret = ICM_SPI_Read(0x2D) << 8;
-//        ret = ret | ICM_SPI_Read(0x2E);
-        icm20948_gyro_read_dps(&gyro_axises);
+        ICM_SPI_Write(0x7F, 0 << 4);
 
-        UARTprintf("accel_x_val (x, y, z) = (%x, %x, %x) \n", gyro_axises.x, gyro_axises.y, gyro_axises.z);
+        // Read Accel val
+        ret = ICM_SPI_Read(0x2D) << 8;
+        ret = ret | ICM_SPI_Read(0x2E);
+        accel_x = ret;
+        ret = ICM_SPI_Read(0x2F) << 8;
+        ret = ret | ICM_SPI_Read(0x30);
+        accel_y = ret;
+        ret = ICM_SPI_Read(0x31) << 8;
+        ret = ret | ICM_SPI_Read(0x32);
+        accel_z = ret;
+
+        // Read Gyro val
+        ret = ICM_SPI_Read(0x33) << 8;
+        ret = ret | ICM_SPI_Read(0x34);
+        gyro_x = ret;
+        ret = ICM_SPI_Read(0x35) << 8;
+        ret = ret | ICM_SPI_Read(0x36);
+        gyro_y = ret;
+        ret = ICM_SPI_Read(0x37) << 8;
+        ret = ret | ICM_SPI_Read(0x38);
+        gyro_z = ret;
+
+//        UARTprintf("gyro_val (x, y, z) = (%x, %x, %x) \n",gyro_x ,gyro_y ,gyro_z);
+
         ROM_SysCtlDelay(SysCtlClockGet() / 5);
+        icm20948_gyro_read_dps(&gyro_axises);
+        icm20948_accel_read_g(&accel_axises);
+        UARTprintf("gyro_val (x, y, z) = (%x, %x, %x) \n", gyro_axises.x, gyro_axises.y, gyro_axises.z);
+        UARTprintf("accel_val (x, y, z) = (%x, %x, %x) \n", accel_axises.x, accel_axises.y, accel_axises.z);
     }
 
     UARTprintf("Done\n");

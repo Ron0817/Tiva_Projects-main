@@ -214,7 +214,7 @@ void icm20948_accel_read(axises* data);
 
 // Convert 16 bits ADC value to their unit.
 void icm20948_gyro_read_dps(axises* data);
-//void icm20948_accel_read_g(axises* data);
+void icm20948_accel_read_g(axises* data);
 
 
 /* Sub Functions */
