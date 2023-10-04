@@ -105,6 +105,7 @@ int main(void)
     uint32_t i;
     uint32_t ret;
     uint32_t accel_x_hi;
+    axises gyro_axises;
 
     // Setup the system clock to run at 50 Mhz from PLL with external oscillator
     ROM_SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
@@ -130,7 +131,7 @@ int main(void)
     // PD2 -> SSI3RX (MISO)
     // PD3 -> SSI3TX (MOSI)
     SPIInit();
-    ROM_SysCtlDelay(SysCtlClockGet()); //lower diviser doesn't work properly
+    ROM_SysCtlDelay(SysCtlClockGet()/10); //lower diviser doesn't work properly
 
     /* -----------------------          Pushbutton Interrupt Init        --------------------- */
     // TODO: Put in SW_int_init()
@@ -186,16 +187,20 @@ int main(void)
 //
 //    ret = ICM_SPI_Read(0x06);
 //    UARTprintf("wakeup 41= 0x%x\n", ret);
-//
-    ICM_SPI_Write(0x7F, 0 << 4);
+
+    UARTprintf("Init check done. Start Reading ...\n");
+    ROM_SysCtlDelay(SysCtlClockGet()); //lower diviser doesn't work properly
+
     while (!stop)
     {
         // TODO: Put them in read_accel()
         // Read Accel X-axis
-        ret = ICM_SPI_Read(0x2D) << 8;
-        UARTprintf("accel_x_hi = 0x%x\n",ret);
-        ret = ret | ICM_SPI_Read(0x2E);
-        UARTprintf("accel_x_lo = 0x%x\n",ret);
+//        ICM_SPI_Write(0x7F, 0 << 4);
+//        ret = ICM_SPI_Read(0x2D) << 8;
+//        ret = ret | ICM_SPI_Read(0x2E);
+        icm20948_gyro_read_dps(&gyro_axises);
+
+        UARTprintf("accel_x_val (x, y, z) = (%x, %x, %x) \n", gyro_axises.x, gyro_axises.y, gyro_axises.z);
         ROM_SysCtlDelay(SysCtlClockGet() / 5);
     }
 

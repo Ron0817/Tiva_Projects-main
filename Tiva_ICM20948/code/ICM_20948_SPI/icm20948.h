@@ -212,8 +212,8 @@ void icm20948_init();
 void icm20948_gyro_read(axises* data);
 void icm20948_accel_read(axises* data);
 
-//// Convert 16 bits ADC value to their unit.
-//void icm20948_gyro_read_dps(axises* data);
+// Convert 16 bits ADC value to their unit.
+void icm20948_gyro_read_dps(axises* data);
 //void icm20948_accel_read_g(axises* data);
 
 
@@ -243,9 +243,9 @@ void icm20948_accel_sample_rate_divider(uint32_t divider);
 
 // Calibration before select full scale.
 void icm20948_gyro_calibration();
-//void icm20948_accel_calibration();
+void icm20948_accel_calibration();
 //
-//void icm20948_gyro_full_scale_select(gyro_full_scale full_scale);
-//void icm20948_accel_full_scale_select(accel_full_scale full_scale);
+void icm20948_gyro_full_scale_select(gyro_full_scale full_scale);
+void icm20948_accel_full_scale_select(accel_full_scale full_scale);
 
 #endif  /* __ICM20948_H__ */
