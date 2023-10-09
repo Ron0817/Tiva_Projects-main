@@ -106,17 +106,16 @@ int main(void)
 {
     uint32_t i;
     uint32_t ret;
-    uint32_t accel_x_hi;
     axises gyro_axises;
     axises accel_axises;
 
     // To be deleted
-    float gyro_x;
-    float gyro_y;
-    float gyro_z;
-    float accel_x;
-    float accel_y;
-    float accel_z;
+    uint16_t gyro_x;
+    uint16_t gyro_y;
+    uint16_t gyro_z;
+    uint16_t accel_x;
+    uint16_t accel_y;
+    uint16_t accel_z;
 
     // Setup the system clock to run at 50 Mhz from PLL with external oscillator
     ROM_SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
@@ -200,43 +199,62 @@ int main(void)
 //    ret = ICM_SPI_Read(0x06);
 //    UARTprintf("wakeup 41= 0x%x\n", ret);
 
-    char strx[10];
-    char stry[10];
-    char strz[10];
+    // For UARTprint only
+    axises_str gyro_axises_str;
+    axises_str accel_axises_str;
+
     while (!stop)
     {
         // TODO: Put them in read_accel()
-        ICM_SPI_Write(0x7F, 0 << 4);
+//        ICM_SPI_Write(0x7F, 0 << 4);
 
         // Read Accel val
-        ret = ICM_SPI_Read(0x2D) << 8;
-        ret = ret | ICM_SPI_Read(0x2E);
-        accel_x = ret;
-        ret = ICM_SPI_Read(0x2F) << 8;
-        ret = ret | ICM_SPI_Read(0x30);
-        accel_y = ret;
-        ret = ICM_SPI_Read(0x31) << 8;
-        ret = ret | ICM_SPI_Read(0x32);
-        accel_z = ret;
+//        accel_x = ICM_SPI_Read(0x2D) << 8;
+//        accel_x = accel_x | ICM_SPI_Read(0x2E);
+//
+//        accel_y = ICM_SPI_Read(0x2F) << 8;
+//        accel_y = ret | ICM_SPI_Read(0x30);
+//
+//        accel_z = ICM_SPI_Read(0x31) << 8;
+//        accel_z = ret | ICM_SPI_Read(0x32);
 
-        // Read Gyro val
-        ret = ICM_SPI_Read(0x33) << 8;
-        ret = ret | ICM_SPI_Read(0x34);
-        gyro_x = ret;
-        ret = ICM_SPI_Read(0x35) << 8;
-        ret = ret | ICM_SPI_Read(0x36);
-        gyro_y = ret;
-        ret = ICM_SPI_Read(0x37) << 8;
-        ret = ret | ICM_SPI_Read(0x38);
-        gyro_z = ret;
+//        // Read Gyro val
+//        gyro_x = ICM_SPI_Read(0x33) << 8;
+//        gyro_x = gyro_x | ICM_SPI_Read(0x34);
+//
+//        gyro_y = ICM_SPI_Read(0x35) << 8;
+//        gyro_y = gyro_y | ICM_SPI_Read(0x36);
+//
+//        gyro_z = ICM_SPI_Read(0x37) << 8;
+//        gyro_z = gyro_z | ICM_SPI_Read(0x38);
+//
+//        UARTprintf("gyro_val (x, y, z) = (%x, %x, %x) \t",gyro_x ,gyro_y ,gyro_z);
+//        UARTprintf("accel_val (x, y, z) = (%d, %d, %d) \n",accel_x/512 ,accel_y/512 ,accel_z/512);
 
-//        UARTprintf("gyro_val (x, y, z) = (%x, %x, %x) \n",gyro_x ,gyro_y ,gyro_z);
 
-        ROM_SysCtlDelay(SysCtlClockGet() / 5);
+        ROM_SysCtlDelay(SysCtlClockGet() / 20);
         icm20948_gyro_read_dps(&gyro_axises);
         icm20948_accel_read_g(&accel_axises);
-        UARTprintf("gyro_val (x, y, z) = (%x, %x, %x) \n", gyro_axises.x, gyro_axises.y, gyro_axises.z);
-        UARTprintf("accel_val (x, y, z) = (%x, %x, %x) \n", accel_axises.x, accel_axises.y, accel_axises.z);
+
+
+        // Add offset for 2's comp negative values
+        ret = (uint16_t) gyro_axises.x < 0x1fff ? sprintf(gyro_axises_str.x, "%d", (uint16_t) gyro_axises.x)
+                : sprintf(gyro_axises_str.x, "-%d", 0xffff - (uint16_t) gyro_axises.x);
+        ret = (uint16_t) gyro_axises.y < 0x1fff ? sprintf(gyro_axises_str.y, "%d", (uint16_t) gyro_axises.y)
+                : sprintf(gyro_axises_str.y, "-%d", 0xffff - (uint16_t) gyro_axises.y);
+        ret = (uint16_t) gyro_axises.z < 0x1fff ? sprintf(gyro_axises_str.z, "%d", (uint16_t) gyro_axises.z)
+                : sprintf(gyro_axises_str.z, "-%d", 0xffff - (uint16_t) gyro_axises.z);
+
+        ret = (uint16_t) accel_axises.x < 0x1fff ? sprintf(accel_axises_str.x, "%d", (uint16_t) accel_axises.x)
+                : sprintf(accel_axises_str.x, "-%d", 0xffff - (uint16_t) accel_axises.x);
+        ret = (uint16_t) accel_axises.y < 0x1fff ? sprintf(accel_axises_str.y, "%d", (uint16_t) accel_axises.y)
+                : sprintf(accel_axises_str.y, "-%d", 0xffff - (uint16_t) accel_axises.y);
+        ret = (uint16_t) accel_axises.z < 0x1fff ? sprintf(accel_axises_str.z, "%d", (uint16_t) accel_axises.z)
+                : sprintf(accel_axises_str.z, "-%d", 0xffff - (uint16_t) accel_axises.z);
+
+        UARTprintf("gyro_val (x, y, z) = (%s,\t%s,\t%s) \t", gyro_axises_str.x, gyro_axises_str.y, gyro_axises_str.z);
+        UARTprintf("accel_val (x, y, z) = (%s,\t%s,\t%s) \n", accel_axises_str.x, accel_axises_str.y, accel_axises_str.z);
+
     }
 
     UARTprintf("Done\n");

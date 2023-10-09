@@ -204,6 +204,14 @@ typedef struct
     float y;
     float z;
 } axises;
+
+typedef struct
+{
+    char x[8];
+    char y[8];
+    char z[8];
+} axises_str;
+
 // sensor init function.
 // if sensor id is wrong, it is stuck in while.
 void icm20948_init();

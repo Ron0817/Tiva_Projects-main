@@ -25,6 +25,7 @@ static void     select_user_bank(int ub);
 void icm20948_init()
 {
     icm20948_device_reset();
+
     icm20948_wakeup();
 
     icm20948_clock_source(1);
@@ -32,9 +33,8 @@ void icm20948_init()
 
     icm20948_spi_slave_enable();
 
-    // Cannot even read it
-    icm20948_gyro_low_pass_filter(1);
-    icm20948_accel_low_pass_filter(1);
+    icm20948_gyro_low_pass_filter(0);
+    icm20948_accel_low_pass_filter(0);
 
     icm20948_gyro_sample_rate_divider(0);
     icm20948_accel_sample_rate_divider(0);
@@ -42,8 +42,8 @@ void icm20948_init()
     icm20948_gyro_calibration();
     icm20948_accel_calibration();
 
-    icm20948_gyro_full_scale_select(_250dps);
-    icm20948_accel_full_scale_select(_2g);
+    icm20948_gyro_full_scale_select(_1000dps);
+    icm20948_accel_full_scale_select(_8g);
 }
 
 void icm20948_gyro_read(axises* data)
@@ -67,35 +67,38 @@ void icm20948_accel_read(axises* data)
 {
 //    uint8_t* temp = read_multiple_icm20948_reg(0, B0_ACCEL_XOUT_H, 6);
     int32_t temp[6] = {0};
-    temp[0] = read_single_icm20948_reg(0, B0_GYRO_XOUT_H);
-    temp[1] = read_single_icm20948_reg(0, B0_GYRO_XOUT_L);
-    temp[2] = read_single_icm20948_reg(0, B0_GYRO_YOUT_H);
-    temp[3] = read_single_icm20948_reg(0, B0_GYRO_YOUT_L);
-    temp[4] = read_single_icm20948_reg(0, B0_GYRO_ZOUT_H);
-    temp[5] = read_single_icm20948_reg(0, B0_GYRO_ZOUT_L);
+    temp[0] = read_single_icm20948_reg(0, B0_ACCEL_XOUT_H);
+    temp[1] = read_single_icm20948_reg(0, B0_ACCEL_XOUT_L);
+    temp[2] = read_single_icm20948_reg(0, B0_ACCEL_YOUT_H);
+    temp[3] = read_single_icm20948_reg(0, B0_ACCEL_YOUT_L);
+    temp[4] = read_single_icm20948_reg(0, B0_ACCEL_ZOUT_H);
+    temp[5] = read_single_icm20948_reg(0, B0_ACCEL_ZOUT_L);
 
     data->x = (int16_t)(temp[0] << 8 | temp[1]);
     data->y = (int16_t)(temp[2] << 8 | temp[3]);
-    data->z = (int16_t)(temp[4] << 8 | temp[5]) + accel_scale_factor;
-    // Add scale factor because calibraiton function offset gravity acceleration.
+    data->z = (int16_t)(temp[4] << 8 | temp[5]);
+
+    //    data->z = (int16_t)(temp[4] << 8 | temp[5]) + accel_scale_factor;
+    // Add scale factor because calibraiton function offset gravity acceleration. - Really?
 }
 
 void icm20948_gyro_read_dps(axises* data)
 {
     icm20948_gyro_read(data);
 
-    data->x = (float) (data->x / gyro_scale_factor);
-    data->y = (float) (data->y / gyro_scale_factor);
-    data->z = (float) (data->z / gyro_scale_factor);
+    data->x /= gyro_scale_factor;
+    data->y /= gyro_scale_factor;
+    data->z /= gyro_scale_factor;
 }
 
 void icm20948_accel_read_g(axises* data)
 {
     icm20948_accel_read(data);
 
-    data->x /= accel_scale_factor;
-    data->y /= accel_scale_factor;
-    data->z /= accel_scale_factor;
+    // if not divide the reading would be undetectable
+    data->x /= (accel_scale_factor / 128);
+    data->y /= (accel_scale_factor / 128);
+    data->z /= (accel_scale_factor / 128);
 }
 
 /* Sub Functions */
@@ -108,6 +111,9 @@ void icm20948_device_reset()
 {
     // Reset sleep mode. Set clock source to auto-select
     write_single_icm20948_reg(0, B0_PWR_MGMT_1, 0x80 | 0x41);
+    ROM_SysCtlDelay(SysCtlClockGet()/10);
+
+    UARTprintf("CHECK: B0_PWR_MGMT_1 = %x\n", ICM_SPI_Read(B0_PWR_MGMT_1));
 }
 
 void icm20948_wakeup()
@@ -139,6 +145,8 @@ void icm20948_wakeup()
 void icm20948_spi_slave_enable()
 {
     uint32_t new_val = 0x10;
+
+//    UARTprintf("*********************spi_slave_enable val = %x\n", read_single_icm20948_reg(0, B0_USER_CTRL));
 
     // Set I2C_IF_DIS bit = 1 to allow SPI only
     ICM_SPI_Write(0x7F, 0);
@@ -173,7 +181,11 @@ void icm20948_spi_slave_enable()
 
 void icm20948_clock_source(uint32_t source)
 {
-    uint32_t new_val = read_single_icm20948_reg(0, B0_PWR_MGMT_1);
+    uint8_t new_val = read_single_icm20948_reg(0, B0_PWR_MGMT_1);
+    new_val |= source;
+    write_single_icm20948_reg(0, B0_PWR_MGMT_1, new_val);
+
+    new_val = read_single_icm20948_reg(0, B0_PWR_MGMT_1);
     UARTprintf("CHECK CLKSET source = 0x01? -> 0x%x\n", new_val);
 }
 
@@ -185,11 +197,11 @@ void icm20948_odr_align_enable()
 
 void icm20948_gyro_low_pass_filter(uint32_t config)
 {
-    uint8_t new_val = 0x00;
+    uint8_t new_val = read_single_icm20948_reg(2, B2_GYRO_CONFIG_1);
 
     new_val |= config << 3;
     write_single_icm20948_reg(2, B2_GYRO_CONFIG_1, new_val);
-    UARTprintf("CHECK: new gyro_config_1 reg val  = 0x01? ->  %x\n", ICM_SPI_Read(B2_GYRO_CONFIG_1));
+    UARTprintf("CHECK: gyro_config_1 reg val  = 0x01? ->  %x\n", ICM_SPI_Read(B2_GYRO_CONFIG_1));
 }
 
 void icm20948_accel_low_pass_filter(uint32_t config)
@@ -197,7 +209,7 @@ void icm20948_accel_low_pass_filter(uint32_t config)
     uint32_t new_val = read_single_icm20948_reg(2, B2_ACCEL_CONFIG);
     new_val |= config << 3;
 
-    write_single_icm20948_reg(2, B2_GYRO_CONFIG_1, new_val);
+    write_single_icm20948_reg(2, B2_ACCEL_CONFIG, new_val);
 }
 
 void icm20948_gyro_sample_rate_divider(uint32_t divider)
@@ -258,9 +270,9 @@ void icm20948_accel_calibration()
 {
     int i;
     axises temp;
-    uint8_t temp2[2] = {0};
-    uint8_t temp3[2] = {0};
-    uint8_t temp4[2] = {0};
+    uint8_t temp2[8] = {0};
+    uint8_t temp3[8] = {0};
+    uint8_t temp4[8] = {0};
 
     int32_t accel_bias[3] = {0};
     int32_t accel_bias_reg[3] = {0};
