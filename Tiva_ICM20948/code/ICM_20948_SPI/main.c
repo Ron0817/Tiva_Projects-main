@@ -1,6 +1,8 @@
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
 #include "inc/hw_types.h"
 #include "inc/hw_memmap.h"
@@ -14,10 +16,11 @@
 #include "driverlib/rom.h"
 #include "driverlib/ssi.h"
 #include "utils/uartstdio.h"
+#include "driverlib/timer.h"
 #include "spi.h"
 #include "icm20948.h"
 
-/* -----------------------          Define Macros       --------------------- */
+/* ------------------------------------          Define Macros       ---------------------------------- */
 // Defind Max ui32TxBuffer size
 #define MAX_PLOAD 32
 
@@ -27,7 +30,7 @@
 #define LED_2   GPIO_PIN_2
 #define LED_3   GPIO_PIN_3
 
-/* -----------------------      Global Variables        --------------------- */
+/* ------------------------------------      Global Variables        ---------------------------------- */
 uint32_t ui32TxBuffer[MAX_PLOAD];
 uint32_t ui32RxBuffer[MAX_PLOAD];
 
@@ -37,7 +40,21 @@ uint32_t GPIOPinStatus = 0x00000000;
 // While (!stop) {}
 bool stop = 0;
 
-/* -----------------------          Functions        --------------------- */
+// gyro and accel axises
+axises gyro_axises;
+axises accel_axises;
+// For UARTprint =
+axises_str gyro_axises_str;
+axises_str accel_axises_str;
+// Workaround for sprintf() to UARTprint 2's complement number
+struct axises_sign{
+    char x[2];
+    char y[2];
+    char z[2];
+};
+
+
+/* ------------------------------------          Functions        ---------------------------------- */
 // The error routine that is called if the driver library encounters an error.
 #ifdef DEBUG
 void
@@ -90,6 +107,33 @@ void count_to_message(uint32_t count_val, uint32_t ui32TxBuffer[MAX_PLOAD]){
     ui32TxBuffer[5] = byte5;
 }
 
+/* ------------------------------------          Timers        ---------------------------------- */
+// Timer5 is used for triggering ICM gyro and accel SPI reading
+void timer5_init(uint32_t frequency)
+{
+    UARTprintf("**************Enter timer init\n");
+    // Enable the timer peripheral
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER5);
+
+    // Timer should run periodically
+    // Full-width periodic timer
+    ROM_TimerConfigure(TIMER5_BASE, TIMER_CFG_PERIODIC);
+
+    // Set the compare value of the timer
+    // This corresponds to the sampling frequency
+    ROM_TimerLoadSet(TIMER5_BASE, TIMER_A, (ROM_SysCtlClockGet()/frequency)-1);
+
+    // Enable the timer interrupt
+    ROM_TimerIntEnable(TIMER5_BASE, TIMER_TIMA_TIMEOUT);
+    ROM_IntEnable(INT_TIMER5A);
+
+    // Enable Timer5
+    ROM_TimerEnable(TIMER5_BASE, TIMER_A);
+
+}
+
+/* ------------------------------------          Interrupts        ---------------------------------- */
+// SW 1 and 2 are used to stop the main while loop
 void GPIOPortFHandler(void)
 {
     UARTprintf("Entered GPIOF IRQ \n ");
@@ -100,22 +144,87 @@ void GPIOPortFHandler(void)
     UARTprintf("Exit GPIOF IRQ \n ");
 }
 
-/* -----------------------          Main Program        --------------------- */
+// Handler for timer 5 to read ICM gyro and accel readings
+void Timer5IntHandler(void)
+{
+    static char* ret_val;
+    // Workaround for sprintf() to UARTprint 2's complement number
+    static struct axises_sign gyro_sign;
+    static struct axises_sign accel_sign;
+
+    // SW interrupt to stop the program
+    if (stop)
+    {
+        ROM_TimerDisable(TIMER5_BASE, TIMER_A);
+    }
+
+    // clear the timer interrupt
+    ROM_TimerIntClear(TIMER5_BASE, TIMER_TIMA_TIMEOUT);
+
+    // Read gyro and accel axises
+    icm20948_gyro_read_dps(&gyro_axises);
+    icm20948_accel_read_g(&accel_axises);
+
+    // Interesting findings that the following sprintf() doesn't work in this ISR.
+    // Reasons might be that it hangs the ISR and takes too long time.
+    // Workaround was used to hardcode the sign of gyro and accel readings
+//    ret_val = (uint16_t) gyro_axises.x < 0x1fff ? sprintf(gyro_axises_str.x, "%d", (uint16_t) gyro_axises.x)
+//            : sprintf(gyro_axises_str.x, "-%d", 0xffff - (uint16_t) gyro_axises.x);
+//    ret_val = (uint16_t) gyro_axises.y < 0x1fff ? sprintf(gyro_axises_str.y, "%d", (uint16_t) gyro_axises.y)
+//            : sprintf(gyro_axises_str.y, "-%d", 0xffff - (uint16_t) gyro_axises.y);
+//    ret_val = (uint16_t) gyro_axises.z < 0x1fff ? sprintf(gyro_axises_str.z, "%d", (uint16_t) gyro_axises.z)
+//            : sprintf(gyro_axises_str.z, "-%d", 0xffff - (uint16_t) gyro_axises.z);
+//
+//    ret_val = (uint16_t) accel_axises.x < 0x1fff ? sprintf(accel_axises_str.x, "%d", (uint16_t) accel_axises.x)
+//            : sprintf(accel_axises_str.x, "-%d", 0xffff - (uint16_t) accel_axises.x);
+//    ret_val = (uint16_t) accel_axises.y < 0x1fff ? sprintf(accel_axises_str.y, "%d", (uint16_t) accel_axises.y)
+//            : sprintf(accel_axises_str.y, "-%d", 0xffff - (uint16_t) accel_axises.y);
+//    ret_val = (uint16_t) accel_axises.z < 0x1fff ? sprintf(accel_axises_str.z, "%d", (uint16_t) accel_axises.z)
+//            : sprintf(accel_axises_str.z, "-%d", 0xffff - (uint16_t) accel_axises.z);
+
+//    UARTprintf("gyro_val (x, y, z) = (%s,\t%s,\t%s) \t", gyro_axises_str.x, gyro_axises_str.y, gyro_axises_str.z);
+//    UARTprintf("accel_val (x, y, z) = (%s,\t%s,\t%s) \n", accel_axises_str.x, accel_axises_str.y, accel_axises_str.z);
+
+    // Convert 2's comp num and print
+    (uint16_t) gyro_axises.x < 0x1fff ? strcpy(gyro_sign.x, "+") : strcpy(gyro_sign.x, "-");
+    (uint16_t) gyro_axises.y < 0x1fff ? strcpy(gyro_sign.y, "+") : strcpy(gyro_sign.y, "-");
+    (uint16_t) gyro_axises.z < 0x1fff ? strcpy(gyro_sign.z, "+") : strcpy(gyro_sign.z, "-");
+    gyro_axises.x = (uint16_t) gyro_axises.x < 0x1fff ? (uint16_t) gyro_axises.x : 0xffff - (uint16_t) gyro_axises.x;
+    gyro_axises.y = (uint16_t) gyro_axises.y < 0x1fff ? (uint16_t) gyro_axises.y : 0xffff - (uint16_t) gyro_axises.y;
+    gyro_axises.z = (uint16_t) gyro_axises.z < 0x1fff ? (uint16_t) gyro_axises.z : 0xffff - (uint16_t) gyro_axises.z;
+
+    (uint16_t) accel_axises.x < 0x1fff ? strcpy(accel_sign.x, "+") : strcpy(accel_sign.x, "-");
+    (uint16_t) accel_axises.y < 0x1fff ? strcpy(accel_sign.y, "+") : strcpy(accel_sign.y, "-");
+    (uint16_t) accel_axises.z < 0x1fff ? strcpy(accel_sign.z, "+") : strcpy(accel_sign.z, "-");
+    accel_axises.x = (uint16_t) accel_axises.x < 0x1fff ? (uint16_t) accel_axises.x : 0xffff - (uint16_t) accel_axises.x;
+    accel_axises.y = (uint16_t) accel_axises.y < 0x1fff ? (uint16_t) accel_axises.y : 0xffff - (uint16_t) accel_axises.y;
+    accel_axises.z = (uint16_t) accel_axises.z < 0x1fff ? (uint16_t) accel_axises.z : 0xffff - (uint16_t) accel_axises.z;
+
+    // Print
+    UARTprintf("gyro_val (x, y, z) = (%s%d,\t%s%d,\t%s%d) \t", gyro_sign.x, (uint16_t) gyro_axises.x,
+               gyro_sign.y, (uint16_t) gyro_axises.y, gyro_sign.y, (uint16_t) gyro_axises.z);
+    UARTprintf("accel_val (x, y, z) = (%s%d,\t%s%d,\t%s%d) \n", accel_sign.x, (uint16_t) accel_axises.x,
+                   accel_sign.y, (uint16_t) accel_axises.y, accel_sign.y, (uint16_t) gyro_axises.z);
+}
+
+
+
+
+/* ------------------------------------          Main Program        ---------------------------------- */
 // Add if #debug tag to all uartprintf()
 int main(void)
 {
     uint32_t i;
     uint32_t ret;
-    axises gyro_axises;
-    axises accel_axises;
+    uint32_t ICM_sampling_frequency = 100;
 
-    // To be deleted
-    uint16_t gyro_x;
-    uint16_t gyro_y;
-    uint16_t gyro_z;
-    uint16_t accel_x;
-    uint16_t accel_y;
-    uint16_t accel_z;
+//    // gyro and accel axises
+//    axises gyro_axises;
+//    axises accel_axises;
+//
+//    // For UARTprint only
+//    axises_str gyro_axises_str;
+//    axises_str accel_axises_str;
 
     // Setup the system clock to run at 50 Mhz from PLL with external oscillator
     ROM_SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
@@ -133,7 +242,7 @@ int main(void)
     ConfigureUART();
     UARTprintf("UART was configured. Let's start\n");
 
-    /* -----------------------          SPI init        --------------------- */
+    /* ------------------------------------          SPI init        ---------------------------------- */
     // SSI3 Signals:
     // PD0 -> SSI3CLK
     // PD2 -> SSI3RX (MISO)
@@ -141,7 +250,8 @@ int main(void)
     SPIInit();
     ROM_SysCtlDelay(SysCtlClockGet()/10); //lower diviser doesn't work properly
 
-    /* -----------------------          Pushbutton Interrupt Init        --------------------- */
+
+    /* ------------------------------------          Pushbutton Interrupt Init        ---------------------------------- */
     // TODO: Put in SW_int_init()
     // Remove the Lock present on Switch SW2 (connected to PF0) and commit the change
     HWREG(GPIO_PORTF_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY;
@@ -162,7 +272,7 @@ int main(void)
     // Connect PF0, PF4 to internal Pull-up resistors and set 2 mA as current strength.
     ROM_GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
 
-    /* -----------------------          Accel and Gyro init        --------------------- */
+    /* ------------------------------------          Accel and Gyro init        ---------------------------------- */
     ret = icm20948_who_am_i();
     UARTprintf("ICM20948 is 0xea ? -> 0x%x\n", ret);
     icm20948_init();
@@ -170,90 +280,35 @@ int main(void)
     UARTprintf("Init check done. Start Reading ...\n");
     ROM_SysCtlDelay(SysCtlClockGet());
 
-//    to delete
-//    ICM_SPI_Write(0x7F, 2<<4);
-//
-//    ret = ICM_SPI_Read(0);
-//    UARTprintf("ub2 reg0 0xea = 0x%x\n", ret);
-//
-//    ICM_SPI_Write(0x7F, 0<<4);
-//
-//    ret = ICM_SPI_Read(0);
-//    UARTprintf("back to ub0 reg0 = 0x%x\n", ret);
-//
-//    ret = ICM_SPI_Read(0x06);
-//    UARTprintf("wakeup x= 0x%x\n", ret);
-//
-//    ICM_SPI_Write(0x06, 0x01);
-//    ret = ICM_SPI_Read(0x06);
-//    UARTprintf("wakeup 01= 0x%x\n", ret);
-//
-//    ICM_SPI_Write(0x06, 0x40);
-//    ret = ICM_SPI_Read(0x06);
-//    UARTprintf("wakeup 40= 0x%x\n", ret);
-//
-//    ICM_SPI_Write(0x06, 0x01);
-//    ret = ICM_SPI_Read(0x06);
-//    UARTprintf("wakeup 01= 0x%x\n", ret);
-//
-//    ret = ICM_SPI_Read(0x06);
-//    UARTprintf("wakeup 41= 0x%x\n", ret);
-
-    // For UARTprint only
-    axises_str gyro_axises_str;
-    axises_str accel_axises_str;
+    /* ------------------------------------          Timer5 init        ---------------------------------- */
+    timer5_init(ICM_sampling_frequency);
 
     while (!stop)
     {
-        // TODO: Put them in read_accel()
-//        ICM_SPI_Write(0x7F, 0 << 4);
 
-        // Read Accel val
-//        accel_x = ICM_SPI_Read(0x2D) << 8;
-//        accel_x = accel_x | ICM_SPI_Read(0x2E);
-//
-//        accel_y = ICM_SPI_Read(0x2F) << 8;
-//        accel_y = ret | ICM_SPI_Read(0x30);
-//
-//        accel_z = ICM_SPI_Read(0x31) << 8;
-//        accel_z = ret | ICM_SPI_Read(0x32);
-
-//        // Read Gyro val
-//        gyro_x = ICM_SPI_Read(0x33) << 8;
-//        gyro_x = gyro_x | ICM_SPI_Read(0x34);
-//
-//        gyro_y = ICM_SPI_Read(0x35) << 8;
-//        gyro_y = gyro_y | ICM_SPI_Read(0x36);
-//
-//        gyro_z = ICM_SPI_Read(0x37) << 8;
-//        gyro_z = gyro_z | ICM_SPI_Read(0x38);
-//
-//        UARTprintf("gyro_val (x, y, z) = (%x, %x, %x) \t",gyro_x ,gyro_y ,gyro_z);
-//        UARTprintf("accel_val (x, y, z) = (%d, %d, %d) \n",accel_x/512 ,accel_y/512 ,accel_z/512);
-
-
+//        UARTprintf("Still alive...\n");
         ROM_SysCtlDelay(SysCtlClockGet() / 20);
-        icm20948_gyro_read_dps(&gyro_axises);
-        icm20948_accel_read_g(&accel_axises);
+//        icm20948_gyro_read_dps(&gyro_axises);
+//        icm20948_accel_read_g(&accel_axises);
 
-
+//        UARTprintf("gyro_val (x, y, z) = (%d,\t%d,\t%d) \n", (uint16_t)gyro_axises.x, (uint16_t)gyro_axises.y, (uint16_t)gyro_axises.z);
         // Add offset for 2's comp negative values
-        ret = (uint16_t) gyro_axises.x < 0x1fff ? sprintf(gyro_axises_str.x, "%d", (uint16_t) gyro_axises.x)
-                : sprintf(gyro_axises_str.x, "-%d", 0xffff - (uint16_t) gyro_axises.x);
-        ret = (uint16_t) gyro_axises.y < 0x1fff ? sprintf(gyro_axises_str.y, "%d", (uint16_t) gyro_axises.y)
-                : sprintf(gyro_axises_str.y, "-%d", 0xffff - (uint16_t) gyro_axises.y);
-        ret = (uint16_t) gyro_axises.z < 0x1fff ? sprintf(gyro_axises_str.z, "%d", (uint16_t) gyro_axises.z)
-                : sprintf(gyro_axises_str.z, "-%d", 0xffff - (uint16_t) gyro_axises.z);
-
-        ret = (uint16_t) accel_axises.x < 0x1fff ? sprintf(accel_axises_str.x, "%d", (uint16_t) accel_axises.x)
-                : sprintf(accel_axises_str.x, "-%d", 0xffff - (uint16_t) accel_axises.x);
-        ret = (uint16_t) accel_axises.y < 0x1fff ? sprintf(accel_axises_str.y, "%d", (uint16_t) accel_axises.y)
-                : sprintf(accel_axises_str.y, "-%d", 0xffff - (uint16_t) accel_axises.y);
-        ret = (uint16_t) accel_axises.z < 0x1fff ? sprintf(accel_axises_str.z, "%d", (uint16_t) accel_axises.z)
-                : sprintf(accel_axises_str.z, "-%d", 0xffff - (uint16_t) accel_axises.z);
-
-        UARTprintf("gyro_val (x, y, z) = (%s,\t%s,\t%s) \t", gyro_axises_str.x, gyro_axises_str.y, gyro_axises_str.z);
-        UARTprintf("accel_val (x, y, z) = (%s,\t%s,\t%s) \n", accel_axises_str.x, accel_axises_str.y, accel_axises_str.z);
+//        ret = (uint16_t) gyro_axises.x < 0x1fff ? sprintf(gyro_axises_str.x, "%d", (uint16_t) gyro_axises.x)
+//                : sprintf(gyro_axises_str.x, "-%d", 0xffff - (uint16_t) gyro_axises.x);
+//        ret = (uint16_t) gyro_axises.y < 0x1fff ? sprintf(gyro_axises_str.y, "%d", (uint16_t) gyro_axises.y)
+//                : sprintf(gyro_axises_str.y, "-%d", 0xffff - (uint16_t) gyro_axises.y);
+//        ret = (uint16_t) gyro_axises.z < 0x1fff ? sprintf(gyro_axises_str.z, "%d", (uint16_t) gyro_axises.z)
+//                : sprintf(gyro_axises_str.z, "-%d", 0xffff - (uint16_t) gyro_axises.z);
+//
+//        ret = (uint16_t) accel_axises.x < 0x1fff ? sprintf(accel_axises_str.x, "%d", (uint16_t) accel_axises.x)
+//                : sprintf(accel_axises_str.x, "-%d", 0xffff - (uint16_t) accel_axises.x);
+//        ret = (uint16_t) accel_axises.y < 0x1fff ? sprintf(accel_axises_str.y, "%d", (uint16_t) accel_axises.y)
+//                : sprintf(accel_axises_str.y, "-%d", 0xffff - (uint16_t) accel_axises.y);
+//        ret = (uint16_t) accel_axises.z < 0x1fff ? sprintf(accel_axises_str.z, "%d", (uint16_t) accel_axises.z)
+//                : sprintf(accel_axises_str.z, "-%d", 0xffff - (uint16_t) accel_axises.z);
+//
+//        UARTprintf("gyro_val (x, y, z) = (%s,\t%s,\t%s) \t", gyro_axises_str.x, gyro_axises_str.y, gyro_axises_str.z);
+//        UARTprintf("accel_val (x, y, z) = (%s,\t%s,\t%s) \n", accel_axises_str.x, accel_axises_str.y, accel_axises_str.z);
 
     }
 

@@ -38,6 +38,9 @@ static void IntDefaultHandler(void);
 extern void GPIOPortFHandler(void);
 //extern void IRQInterruptHandler(void);
 
+// Timer 0 - 4 reserved for headstages
+extern void Timer5IntHandler(void);
+
 //*****************************************************************************
 //
 // External declaration for the reset handler that is to be called when the
@@ -172,7 +175,7 @@ void (* const g_pfnVectors[])(void) =
     0,                                      // Reserved
     0,                                      // Reserved
     0,                                      // Reserved
-    IntDefaultHandler,                      // Timer 5 subtimer A
+    Timer5IntHandler,                      // Timer 5 subtimer A
     IntDefaultHandler,                      // Timer 5 subtimer B
     IntDefaultHandler,                      // Wide Timer 0 subtimer A
     IntDefaultHandler,                      // Wide Timer 0 subtimer B
