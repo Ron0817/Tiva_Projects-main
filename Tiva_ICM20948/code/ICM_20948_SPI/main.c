@@ -152,14 +152,14 @@ void Timer5IntHandler(void)
     static struct axises_sign gyro_sign;
     static struct axises_sign accel_sign;
 
+    // Clear the timer interrupt. Recommended to do so earilest as possible.
+    ROM_TimerIntClear(TIMER5_BASE, TIMER_TIMA_TIMEOUT);
+
     // SW interrupt to stop the program
     if (stop)
     {
         ROM_TimerDisable(TIMER5_BASE, TIMER_A);
     }
-
-    // clear the timer interrupt
-    ROM_TimerIntClear(TIMER5_BASE, TIMER_TIMA_TIMEOUT);
 
     // Read gyro and accel axises
     icm20948_gyro_read_dps(&gyro_axises);
@@ -167,7 +167,7 @@ void Timer5IntHandler(void)
 
     // Interesting findings that the following sprintf() doesn't work in this ISR.
     // Reasons might be that it hangs the ISR and takes too long time.
-    // Workaround was used to hardcode the sign of gyro and accel readings
+    // A workaround was made to hardcode the sign of gyro and accel readings
 //    ret_val = (uint16_t) gyro_axises.x < 0x1fff ? sprintf(gyro_axises_str.x, "%d", (uint16_t) gyro_axises.x)
 //            : sprintf(gyro_axises_str.x, "-%d", 0xffff - (uint16_t) gyro_axises.x);
 //    ret_val = (uint16_t) gyro_axises.y < 0x1fff ? sprintf(gyro_axises_str.y, "%d", (uint16_t) gyro_axises.y)
@@ -202,11 +202,10 @@ void Timer5IntHandler(void)
 
     // Print
     UARTprintf("gyro_val (x, y, z) = (%s%d,\t%s%d,\t%s%d) \t", gyro_sign.x, (uint16_t) gyro_axises.x,
-               gyro_sign.y, (uint16_t) gyro_axises.y, gyro_sign.y, (uint16_t) gyro_axises.z);
+               gyro_sign.y, (uint16_t) gyro_axises.y, gyro_sign.z, (uint16_t) gyro_axises.z);
     UARTprintf("accel_val (x, y, z) = (%s%d,\t%s%d,\t%s%d) \n", accel_sign.x, (uint16_t) accel_axises.x,
-                   accel_sign.y, (uint16_t) accel_axises.y, accel_sign.y, (uint16_t) gyro_axises.z);
+                   accel_sign.y, (uint16_t) accel_axises.y, accel_sign.y, (uint16_t) accel_axises.z);
 }
-
 
 
 
@@ -214,9 +213,9 @@ void Timer5IntHandler(void)
 // Add if #debug tag to all uartprintf()
 int main(void)
 {
-    uint32_t i;
+    uint32_t cnt;
     uint32_t ret;
-    uint32_t ICM_sampling_frequency = 100;
+    uint32_t ICM_sampling_frequency = 10;
 
 //    // gyro and accel axises
 //    axises gyro_axises;
@@ -283,11 +282,12 @@ int main(void)
     /* ------------------------------------          Timer5 init        ---------------------------------- */
     timer5_init(ICM_sampling_frequency);
 
+    cnt = 0;
     while (!stop)
     {
+        cnt ++;
+        ROM_SysCtlDelay(ROM_SysCtlClockGet()/3);
 
-//        UARTprintf("Still alive...\n");
-        ROM_SysCtlDelay(SysCtlClockGet() / 20);
 //        icm20948_gyro_read_dps(&gyro_axises);
 //        icm20948_accel_read_g(&accel_axises);
 
@@ -313,7 +313,9 @@ int main(void)
     }
 
     UARTprintf("Done\n");
+    UARTprintf("The program has been run for %d seconds\n", cnt);
 
     return 0;
 }
+
 
