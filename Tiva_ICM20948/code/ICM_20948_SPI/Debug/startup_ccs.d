@@ -11,8 +11,8 @@ startup_ccs.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/
 startup_ccs.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_types.h
 startup_ccs.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_stdint.h
 startup_ccs.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/sys/_stdint.h
-startup_ccs.obj: C:/ti/TivaWare_C_Series-1.1/inc/hw_nvic.h
-startup_ccs.obj: C:/ti/TivaWare_C_Series-1.1/inc/hw_types.h
+startup_ccs.obj: C:/ti/TivaWare_C_Series-2.1.4.178/inc/hw_nvic.h
+startup_ccs.obj: C:/ti/TivaWare_C_Series-2.1.4.178/inc/hw_types.h
 
 ../startup_ccs.c:
 
@@ -36,7 +36,7 @@ D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_stdint.h
 
 D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/sys/_stdint.h:
 
-C:/ti/TivaWare_C_Series-1.1/inc/hw_nvic.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/inc/hw_nvic.h:
 
-C:/ti/TivaWare_C_Series-1.1/inc/hw_types.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/inc/hw_types.h:
 

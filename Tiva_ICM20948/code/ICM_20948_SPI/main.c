@@ -19,6 +19,9 @@
 #include "driverlib/timer.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/systick.h"
+#include "utils/cmdline.h"
+//#include "utils/uartstdio.h"
+//#include "utils/uartstdio.c"
 
 #include "spi.h"
 #include "ff.h"
@@ -28,8 +31,6 @@
 /* ------------------------------------          Define Macros       ---------------------------------- */
 // Defind Max ui32TxBuffer size
 #define MAX_PLOAD 32
-#define LED_R GPIO_PIN_7 // [why need this?]
-#define LED_G GPIO_PIN_6
 
 // Define pin to LED color mapping.
 #define LED_0   GPIO_PIN_0
@@ -37,6 +38,12 @@
 #define LED_2   GPIO_PIN_2
 #define LED_3   GPIO_PIN_3
 
+#define LED_R GPIO_PIN_7 // [why need this?]
+#define LED_G GPIO_PIN_6
+
+// Define variables that will be replaced by config.txt by users
+# define BUFFER_SIZE (4096)
+# define ICM_SAMPLING_FREQUENCY (10)
 /* ------------------------------------      Global Variables        ---------------------------------- */
 uint32_t ui32TxBuffer[MAX_PLOAD];
 uint32_t ui32RxBuffer[MAX_PLOAD];
@@ -60,65 +67,14 @@ struct axises_sign{
     char z[2];
 };
 
-// Variable for SD Card
+// Variables for SD Card R/W
 FATFS fatfs;
 FIL fil;
 FRESULT rc;
 UINT br, bw;
+uint32_t buffer_size = BUFFER_SIZE;
+uint16_t *bufferA;
 
-
-/* ------------------------------------          Functions        ---------------------------------- */
-// The error routine that is called if the driver library encounters an error.
-#ifdef DEBUG
-void
-__error__(char *pcFilename, uint32_t ui32Line)
-{
-}
-#endif
-
-void ConfigureUART(void)
-{
-    // Enable the GPIO Peripheral used by the UART.
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
-
-    // Enable UART0
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
-    ROM_SysCtlPeripheralSleepEnable(SYSCTL_PERIPH_UART0);
-
-    // Configure GPIO Pins for UART mode.
-    ROM_GPIOPinConfigure(GPIO_PA0_U0RX);
-    ROM_GPIOPinConfigure(GPIO_PA1_U0TX);
-    ROM_GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
-
-    // Use the internal 16MHz oscillator as the UART clock source.
-    UARTClockSourceSet(UART0_BASE, UART_CLOCK_PIOSC);
-
-    // Initialize the UART for console I/O.
-    UARTStdioConfig(0, 115200, 16000000);
-}
-
-void count_to_message(uint32_t count_val, uint32_t ui32TxBuffer[MAX_PLOAD]){
-    //uint32_t * messagePtr = (uint32_t*)malloc(sizeof(uint32_t)*MAX_PLOAD);
-    //divide the count value into bytes
-    uint8_t byte0 = count_val & 0xFF;
-    count_val = count_val >> 8;
-    uint8_t byte1 = count_val & 0xFF;
-    count_val = count_val >> 8;
-    uint8_t byte2 = count_val & 0xFF;
-    count_val = count_val >> 8;
-    uint8_t byte3 = count_val & 0xFF;
-    count_val = count_val >> 8;
-    uint8_t byte4 = count_val & 0xFF;
-    count_val = count_val >> 8;
-    uint8_t byte5 = count_val & 0xFF;
-    count_val = count_val >> 8;
-    ui32TxBuffer[0] = byte0;
-    ui32TxBuffer[1] = byte1;
-    ui32TxBuffer[2] = byte2;
-    ui32TxBuffer[3] = byte3;
-    ui32TxBuffer[4] = byte4;
-    ui32TxBuffer[5] = byte5;
-}
 
 /* ------------------------------------          Timers        ---------------------------------- */
 // Timer5 is used for triggering ICM gyro and accel SPI reading
@@ -157,7 +113,7 @@ void GPIOPortFHandler(void)
     UARTprintf("Exit GPIOF IRQ \n ");
 }
 
-// Handler for timer 5 to read ICM gyro and accel readings
+// Timer5 Handler for storing ICM gyro and accel readings to buffer
 void Timer5IntHandler(void)
 {
     static char* ret_val;
@@ -214,10 +170,15 @@ void Timer5IntHandler(void)
     accel_axises.z = (uint16_t) accel_axises.z < 0x1fff ? (uint16_t) accel_axises.z : 0xffff - (uint16_t) accel_axises.z;
 
     // Print
+    UARTprintf("gyro_x = %d\n", (uint16_t)gyro_axises.x);
     UARTprintf("gyro_val (x, y, z) = (%s%d,\t%s%d,\t%s%d) \t", gyro_sign.x, (uint16_t) gyro_axises.x,
                gyro_sign.y, (uint16_t) gyro_axises.y, gyro_sign.z, (uint16_t) gyro_axises.z);
     UARTprintf("accel_val (x, y, z) = (%s%d,\t%s%d,\t%s%d) \n", accel_sign.x, (uint16_t) accel_axises.x,
                    accel_sign.y, (uint16_t) accel_axises.y, accel_sign.y, (uint16_t) accel_axises.z);
+
+    // Store to buffer
+//    bufferA
+
 }
 
 // Systick handler for FatFs library
@@ -231,13 +192,100 @@ void SysTickHandler(void)
 /* ------------------------------------          SD Card        ---------------------------------- */
 //sd_initial();
 
+/* ------------------------------------          Functions        ---------------------------------- */
+// The error routine that is called if the driver library encounters an error.
+#ifdef DEBUG
+void
+__error__(char *pcFilename, uint32_t ui32Line)
+{
+}
+#endif
+
+void ConfigureUART(void)
+{
+    // Enable the GPIO Peripheral used by the UART.
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+
+    // Enable UART0
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
+    ROM_SysCtlPeripheralSleepEnable(SYSCTL_PERIPH_UART0);
+
+    // Configure GPIO Pins for UART mode.
+    ROM_GPIOPinConfigure(GPIO_PA0_U0RX);
+    ROM_GPIOPinConfigure(GPIO_PA1_U0TX);
+    ROM_GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+
+    // Use the internal 16MHz oscillator as the UART clock source.
+    UARTClockSourceSet(UART0_BASE, UART_CLOCK_PIOSC);
+
+    // Initialize the UART for console I/O.
+    UARTStdioConfig(0, 115200, 16000000);
+
+}
+
+void count_to_message(uint32_t count_val, uint32_t ui32TxBuffer[MAX_PLOAD]){
+    //uint32_t * messagePtr = (uint32_t*)malloc(sizeof(uint32_t)*MAX_PLOAD);
+    //divide the count value into bytes
+    uint8_t byte0 = count_val & 0xFF;
+    count_val = count_val >> 8;
+    uint8_t byte1 = count_val & 0xFF;
+    count_val = count_val >> 8;
+    uint8_t byte2 = count_val & 0xFF;
+    count_val = count_val >> 8;
+    uint8_t byte3 = count_val & 0xFF;
+    count_val = count_val >> 8;
+    uint8_t byte4 = count_val & 0xFF;
+    count_val = count_val >> 8;
+    uint8_t byte5 = count_val & 0xFF;
+    count_val = count_val >> 8;
+    ui32TxBuffer[0] = byte0;
+    ui32TxBuffer[1] = byte1;
+    ui32TxBuffer[2] = byte2;
+    ui32TxBuffer[3] = byte3;
+    ui32TxBuffer[4] = byte4;
+    ui32TxBuffer[5] = byte5;
+}
+
+// Pushbutton init
+void SW_int_init(void){
+// Remove the Lock present on Switch SW2 (connected to PF0) and commit the change
+   HWREG(GPIO_PORTF_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY;
+   HWREG(GPIO_PORTF_BASE + GPIO_O_CR) |= GPIO_PIN_0 | GPIO_PIN_4;
+
+   // Set the System clock to 80MHz and enable the clock for peripheral PortF.
+   SysCtlClockSet(SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
+
+   // Configure input for PF4(SW1) and PF0(SW2)
+   ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+   ROM_GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0);
+
+   // Set up IRQ for PortF 4 |0
+   GPIOIntRegister(GPIO_PORTF_BASE, GPIOPortFHandler);
+   ROM_GPIOIntTypeSet(GPIO_PORTF_BASE,  GPIO_PIN_4 | GPIO_PIN_0, GPIO_FALLING_EDGE);
+   GPIOIntEnable(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0);
+
+   // Connect PF0, PF4 to internal Pull-up resistors and set 2 mA as current strength.
+   ROM_GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+}
+
+
 /* ------------------------------------          Main Program        ---------------------------------- */
 // Add if #debug tag to all uartprintf()
 int main(void)
 {
-    uint32_t cnt;
     uint32_t ret;
-    uint32_t ICM_sampling_frequency = 10;
+
+    // Run time count
+    uint32_t cnt;
+
+    // ICM sampling frequency
+    uint32_t ICM_sampling_frequency = ICM_SAMPLING_FREQUENCY;
+
+    // Variables for reading data from SD Card
+    uint32_t read_value;
+    TCHAR read_buffer[32];
+    TCHAR *command;
+    TCHAR *value;
 
     // To be deleted
 //    // gyro and accel axises
@@ -248,7 +296,7 @@ int main(void)
 //    axises_str gyro_axises_str;
 //    axises_str accel_axises_str;
 
-    // Setup the system clock to run at 50 Mhz from PLL with external oscillator
+    // Setup the system clock to run at ?? Mhz from PLL with external oscillator
     ROM_SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
 
     // Launchpad Board
@@ -279,17 +327,40 @@ int main(void)
     ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_R, LED_R);
     ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
 
-    // mount the SD Card using logical drive 0.
-    rc = f_mount(0, &fatfs);
-    if(rc != FR_OK)
-    {
-        UARTprintf("CHECK: f_mount error\n");
-        return 0;
-    }
-    else
-    {
-        UARTprintf("CHECK: f_mount success!\n");
-    }
+//    // mount the SD Card using logical drive 0.
+//    rc = f_mount(0, &fatfs);
+//    if(rc != FR_OK)
+//    {
+//        UARTprintf("CHECK: f_mount error\n");
+//        return 0;
+//    }
+//    else
+//    {
+//        UARTprintf("CHECK: f_mount success!\n");
+//    }
+//
+//    // open the configuration file
+//    rc = f_open(&fil, "config.txt", FA_READ);
+//    if(rc != FR_OK)
+//    {
+//        UARTprintf("CHECK: Configuration file doesn't exist. Bye!\n");
+//        return 0;
+//    }
+//    else
+//    {
+//        UARTprintf("CHECK: Configuration file found.\n");
+//        while(!f_eof(&fil)) {
+//           f_gets((char *)read_buffer, sizeof(read_buffer), &fil);
+//           command = strtok(read_buffer, ":"); //strtok function breaks string into a series of tokens using a delimiter
+//           value = strtok(NULL, ":");
+//           if(strcmp(command, "sampling_frequency") == 0) {
+//               read_value = strtol(value, NULL,10); //strtol function converts string to integer
+//               UARTprintf("******************************sampling_frequency:%d\n", read_value);
+//           }
+//        }
+//    }
+    // Set up buffer
+    *bufferA = (uint16_t *)malloc(buffer_size*sizeof(uint16_t));
 
     /* ------------------------------------          SPI init        ---------------------------------- */
     // SSI3 Signals:
@@ -299,27 +370,8 @@ int main(void)
     SPIInit();
     ROM_SysCtlDelay(SysCtlClockGet()/10); //lower diviser doesn't work properly
 
-
     /* ------------------------------------          Pushbutton Interrupt Init        ---------------------------------- */
-    // TODO: Put in SW_int_init()
-    // Remove the Lock present on Switch SW2 (connected to PF0) and commit the change
-    HWREG(GPIO_PORTF_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY;
-    HWREG(GPIO_PORTF_BASE + GPIO_O_CR) |= GPIO_PIN_0 | GPIO_PIN_4;
-
-    // Set the System clock to 80MHz and enable the clock for peripheral PortF.
-    SysCtlClockSet(SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
-
-    // Configure input for PF4(SW1) and PF0(SW2)
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
-    ROM_GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0);
-
-    // Set up IRQ for PortF 4 |0
-    GPIOIntRegister(GPIO_PORTF_BASE, GPIOPortFHandler);
-    ROM_GPIOIntTypeSet(GPIO_PORTF_BASE,  GPIO_PIN_4 | GPIO_PIN_0, GPIO_FALLING_EDGE);
-    GPIOIntEnable(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0);
-
-    // Connect PF0, PF4 to internal Pull-up resistors and set 2 mA as current strength.
-    ROM_GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+    SW_int_init();
 
     /* ------------------------------------          Accel and Gyro init        ---------------------------------- */
     ret = icm20948_who_am_i();
@@ -367,5 +419,8 @@ int main(void)
 
     return 0;
 }
+
+
+
 
 

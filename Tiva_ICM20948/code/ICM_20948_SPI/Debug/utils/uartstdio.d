@@ -13,17 +13,17 @@ utils/uartstdio.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/incl
 utils/uartstdio.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_stdint.h
 utils/uartstdio.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/sys/_stdint.h
 utils/uartstdio.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdarg.h
-utils/uartstdio.obj: C:/ti/TivaWare_C_Series-1.1/inc/hw_ints.h
-utils/uartstdio.obj: C:/ti/TivaWare_C_Series-1.1/inc/hw_memmap.h
-utils/uartstdio.obj: C:/ti/TivaWare_C_Series-1.1/inc/hw_types.h
-utils/uartstdio.obj: C:/ti/TivaWare_C_Series-1.1/inc/hw_uart.h
-utils/uartstdio.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/debug.h
-utils/uartstdio.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/interrupt.h
-utils/uartstdio.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/rom.h
-utils/uartstdio.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/rom_map.h
-utils/uartstdio.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/sysctl.h
-utils/uartstdio.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/uart.h
-utils/uartstdio.obj: C:/ti/TivaWare_C_Series-1.1/utils/uartstdio.h
+utils/uartstdio.obj: C:/ti/TivaWare_C_Series-2.1.4.178/inc/hw_ints.h
+utils/uartstdio.obj: C:/ti/TivaWare_C_Series-2.1.4.178/inc/hw_memmap.h
+utils/uartstdio.obj: C:/ti/TivaWare_C_Series-2.1.4.178/inc/hw_types.h
+utils/uartstdio.obj: C:/ti/TivaWare_C_Series-2.1.4.178/inc/hw_uart.h
+utils/uartstdio.obj: C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/debug.h
+utils/uartstdio.obj: C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/interrupt.h
+utils/uartstdio.obj: C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/rom.h
+utils/uartstdio.obj: C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/rom_map.h
+utils/uartstdio.obj: C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/sysctl.h
+utils/uartstdio.obj: C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/uart.h
+utils/uartstdio.obj: C:/ti/TivaWare_C_Series-2.1.4.178/utils/uartstdio.h
 
 C:/ti/TivaWare_C_Series-1.1/utils/uartstdio.c:
 
@@ -51,25 +51,25 @@ D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/sys/_stdint.h:
 
 D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/stdarg.h:
 
-C:/ti/TivaWare_C_Series-1.1/inc/hw_ints.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/inc/hw_ints.h:
 
-C:/ti/TivaWare_C_Series-1.1/inc/hw_memmap.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/inc/hw_memmap.h:
 
-C:/ti/TivaWare_C_Series-1.1/inc/hw_types.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/inc/hw_types.h:
 
-C:/ti/TivaWare_C_Series-1.1/inc/hw_uart.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/inc/hw_uart.h:
 
-C:/ti/TivaWare_C_Series-1.1/driverlib/debug.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/debug.h:
 
-C:/ti/TivaWare_C_Series-1.1/driverlib/interrupt.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/interrupt.h:
 
-C:/ti/TivaWare_C_Series-1.1/driverlib/rom.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/rom.h:
 
-C:/ti/TivaWare_C_Series-1.1/driverlib/rom_map.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/rom_map.h:
 
-C:/ti/TivaWare_C_Series-1.1/driverlib/sysctl.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/sysctl.h:
 
-C:/ti/TivaWare_C_Series-1.1/driverlib/uart.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/uart.h:
 
-C:/ti/TivaWare_C_Series-1.1/utils/uartstdio.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/utils/uartstdio.h:
 

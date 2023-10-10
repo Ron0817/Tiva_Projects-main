@@ -13,13 +13,13 @@ spi.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/sys/_typ
 spi.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_types.h
 spi.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_stdint.h
 spi.obj: D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/sys/_stdint.h
-spi.obj: C:/ti/TivaWare_C_Series-1.1/inc/hw_types.h
-spi.obj: C:/ti/TivaWare_C_Series-1.1/inc/hw_memmap.h
-spi.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/sysctl.h
-spi.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/gpio.h
-spi.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/pin_map.h
-spi.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/ssi.h
-spi.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/rom.h
+spi.obj: C:/ti/TivaWare_C_Series-2.1.4.178/inc/hw_types.h
+spi.obj: C:/ti/TivaWare_C_Series-2.1.4.178/inc/hw_memmap.h
+spi.obj: C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/sysctl.h
+spi.obj: C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/gpio.h
+spi.obj: C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/pin_map.h
+spi.obj: C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/ssi.h
+spi.obj: C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/rom.h
 
 ../spi.c:
 
@@ -47,17 +47,17 @@ D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/machine/_stdint.h
 
 D:/ti/ccs1240/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include/sys/_stdint.h:
 
-C:/ti/TivaWare_C_Series-1.1/inc/hw_types.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/inc/hw_types.h:
 
-C:/ti/TivaWare_C_Series-1.1/inc/hw_memmap.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/inc/hw_memmap.h:
 
-C:/ti/TivaWare_C_Series-1.1/driverlib/sysctl.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/sysctl.h:
 
-C:/ti/TivaWare_C_Series-1.1/driverlib/gpio.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/gpio.h:
 
-C:/ti/TivaWare_C_Series-1.1/driverlib/pin_map.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/pin_map.h:
 
-C:/ti/TivaWare_C_Series-1.1/driverlib/ssi.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/ssi.h:
 
-C:/ti/TivaWare_C_Series-1.1/driverlib/rom.h:
+C:/ti/TivaWare_C_Series-2.1.4.178/driverlib/rom.h:
 
