@@ -155,12 +155,6 @@ void Timer5IntHandler(void)
 //    UARTprintf("accel_val (x, y, z) = (%s,\t%s,\t%s) \n", accel_axises_str.x, accel_axises_str.y, accel_axises_str.z);
 
     // Convert 2's comp num and print
-    (uint16_t) gyro_axises.x < 0x1fff ? strcpy(gyro_sign.x, "+") : strcpy(gyro_sign.x, "-");
-    (uint16_t) gyro_axises.y < 0x1fff ? strcpy(gyro_sign.y, "+") : strcpy(gyro_sign.y, "-");
-    (uint16_t) gyro_axises.z < 0x1fff ? strcpy(gyro_sign.z, "+") : strcpy(gyro_sign.z, "-");
-    gyro_axises.x = (uint16_t) gyro_axises.x < 0x1fff ? (uint16_t) gyro_axises.x : 0xffff - (uint16_t) gyro_axises.x;
-    gyro_axises.y = (uint16_t) gyro_axises.y < 0x1fff ? (uint16_t) gyro_axises.y : 0xffff - (uint16_t) gyro_axises.y;
-    gyro_axises.z = (uint16_t) gyro_axises.z < 0x1fff ? (uint16_t) gyro_axises.z : 0xffff - (uint16_t) gyro_axises.z;
 
     (uint16_t) accel_axises.x < 0x1fff ? strcpy(accel_sign.x, "+") : strcpy(accel_sign.x, "-");
     (uint16_t) accel_axises.y < 0x1fff ? strcpy(accel_sign.y, "+") : strcpy(accel_sign.y, "-");
@@ -169,11 +163,30 @@ void Timer5IntHandler(void)
     accel_axises.y = (uint16_t) accel_axises.y < 0x1fff ? (uint16_t) accel_axises.y : 0xffff - (uint16_t) accel_axises.y;
     accel_axises.z = (uint16_t) accel_axises.z < 0x1fff ? (uint16_t) accel_axises.z : 0xffff - (uint16_t) accel_axises.z;
 
+    (uint16_t) gyro_axises.x < 0x1fff ? strcpy(gyro_sign.x, "+") : strcpy(gyro_sign.x, "-");
+    (uint16_t) gyro_axises.y < 0x1fff ? strcpy(gyro_sign.y, "+") : strcpy(gyro_sign.y, "-");
+    (uint16_t) gyro_axises.z < 0x1fff ? strcpy(gyro_sign.z, "+") : strcpy(gyro_sign.z, "-");
+    gyro_axises.x = (uint16_t) gyro_axises.x < 0x1fff ? (uint16_t) gyro_axises.x : 0xffff - (uint16_t) gyro_axises.x;
+    gyro_axises.y = (uint16_t) gyro_axises.y < 0x1fff ? (uint16_t) gyro_axises.y : 0xffff - (uint16_t) gyro_axises.y;
+    gyro_axises.z = (uint16_t) gyro_axises.z < 0x1fff ? (uint16_t) gyro_axises.z : 0xffff - (uint16_t) gyro_axises.z;
+
+
     // Print
-    UARTprintf("Accel axises (x, y, z) = (%s%d, %s%d, %s%d) \t", accel_sign.x, (uint16_t) accel_axises.x,
-                   accel_sign.y, (uint16_t) accel_axises.y, accel_sign.y, (uint16_t) accel_axises.z);
-    UARTprintf("Gyro axises (x, y, z) = (%s%d, %s%d, %s%d) \n", gyro_sign.x, (uint16_t) gyro_axises.x,
-                   gyro_sign.y, (uint16_t) gyro_axises.y, gyro_sign.z, (uint16_t) gyro_axises.z);
+//    UARTprintf("Accel axises (x, y, z) = (%s%d, %s%d, %s%d) ", accel_sign.x, (uint16_t) accel_axises.x,
+//                   accel_sign.y, (uint16_t) accel_axises.y, accel_sign.y, (uint16_t) accel_axises.z);
+//    UARTprintf("Gyro axises (x, y, z) = (%s%d, %s%d, %s%d) \n", gyro_sign.x, (uint16_t) gyro_axises.x,
+//                   gyro_sign.y, (uint16_t) gyro_axises.y, gyro_sign.z, (uint16_t) gyro_axises.z);
+
+    // When f_mount() uncommented, UARTprintf() long string causes data corruption (sign not printed, unexpected line change)
+    // Use short string instead
+    UARTprintf("Accel axises =" );
+    UARTprintf("(%s%d, ", accel_sign.x, (uint16_t) accel_axises.x);
+    UARTprintf("%s%d, ", accel_sign.y, (uint16_t) accel_axises.y);
+    UARTprintf("%s%d) ", accel_sign.z, (uint16_t) accel_axises.z);
+    UARTprintf("Gyro axises =" );
+    UARTprintf("(%s%d, ", gyro_sign.x, (uint16_t) gyro_axises.x);
+    UARTprintf("%s%d, ", gyro_sign.y, (uint16_t) gyro_axises.y);
+    UARTprintf("%s%d)\n ", gyro_sign.z, (uint16_t) gyro_axises.z);
 
     // Store to buffer
 //    bufferA
@@ -245,26 +258,26 @@ void count_to_message(uint32_t count_val, uint32_t ui32TxBuffer[MAX_PLOAD]){
     ui32TxBuffer[5] = byte5;
 }
 
-// Pushbutton init
+// Pushbutton init - Only SW1(PF4) enabled as SW2(PF0) conflict with MISO1
 void SW_int_init(void){
 // Remove the Lock present on Switch SW2 (connected to PF0) and commit the change
    HWREG(GPIO_PORTF_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY;
-   HWREG(GPIO_PORTF_BASE + GPIO_O_CR) |= GPIO_PIN_0 | GPIO_PIN_4;
+   HWREG(GPIO_PORTF_BASE + GPIO_O_CR) |= GPIO_PIN_4;
 
    // Set the System clock to 80MHz and enable the clock for peripheral PortF.
    SysCtlClockSet(SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
 
    // Configure input for PF4(SW1) and PF0(SW2)
    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
-   ROM_GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0);
+   ROM_GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_4);
 
    // Set up IRQ for PortF 4 |0
    GPIOIntRegister(GPIO_PORTF_BASE, GPIOPortFHandler);
-   ROM_GPIOIntTypeSet(GPIO_PORTF_BASE,  GPIO_PIN_4 | GPIO_PIN_0, GPIO_FALLING_EDGE);
-   GPIOIntEnable(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0);
+   ROM_GPIOIntTypeSet(GPIO_PORTF_BASE,  GPIO_PIN_4, GPIO_FALLING_EDGE);
+   GPIOIntEnable(GPIO_PORTF_BASE, GPIO_PIN_4);
 
    // Connect PF0, PF4 to internal Pull-up resistors and set 2 mA as current strength.
-   ROM_GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+   ROM_GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_4, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
 }
 
 
@@ -337,17 +350,17 @@ int main(void)
     {
         UARTprintf("CHECK: f_mount success!\n");
     }
-//
-//    // open the configuration file
-//    rc = f_open(&fil, "config.txt", FA_READ);
-//    if(rc != FR_OK)
-//    {
-//        UARTprintf("CHECK: Configuration file doesn't exist. Bye!\n");
-//        return 0;
-//    }
-//    else
-//    {
-//        UARTprintf("CHECK: Configuration file found.\n");
+
+    // open the configuration file
+    rc = f_open(&fil, "confighd.txt", FA_READ);
+    if(rc != FR_OK)
+    {
+        UARTprintf("CHECK: Configuration file doesn't exist. Bye!\n");
+        return 0;
+    }
+    else
+    {
+        UARTprintf("CHECK: Configuration file found.\n");
 //        while(!f_eof(&fil)) {
 //           f_gets((char *)read_buffer, sizeof(read_buffer), &fil);
 //           command = strtok(read_buffer, ":"); //strtok function breaks string into a series of tokens using a delimiter
@@ -357,7 +370,7 @@ int main(void)
 //               UARTprintf("******************************sampling_frequency:%d\n", read_value);
 //           }
 //        }
-//    }
+    }
     // Set up buffer
     *bufferA = (uint16_t *)malloc(buffer_size*sizeof(uint16_t));
 
@@ -370,7 +383,7 @@ int main(void)
     ROM_SysCtlDelay(SysCtlClockGet()/10); //lower diviser doesn't work properly
 
     /* ------------------------------------          Pushbutton Interrupt Init        ---------------------------------- */
-//    SW_int_init();
+    SW_int_init();
 
     /* ------------------------------------          Accel and Gyro init        ---------------------------------- */
     ret = icm20948_who_am_i();
