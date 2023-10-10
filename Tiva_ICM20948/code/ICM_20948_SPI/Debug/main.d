@@ -30,7 +30,12 @@ main.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/rom.h
 main.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/ssi.h
 main.obj: C:/ti/TivaWare_C_Series-1.1/utils/uartstdio.h
 main.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/timer.h
+main.obj: C:/ti/TivaWare_C_Series-1.1/driverlib/systick.h
 main.obj: ../spi.h
+main.obj: ../ff.h
+main.obj: ../integer.h
+main.obj: ../ffconf.h
+main.obj: ../diskio.h
 main.obj: ../icm20948.h
 
 ../main.c:
@@ -93,7 +98,17 @@ C:/ti/TivaWare_C_Series-1.1/utils/uartstdio.h:
 
 C:/ti/TivaWare_C_Series-1.1/driverlib/timer.h:
 
+C:/ti/TivaWare_C_Series-1.1/driverlib/systick.h:
+
 ../spi.h:
+
+../ff.h:
+
+../integer.h:
+
+../ffconf.h:
+
+../diskio.h:
 
 ../icm20948.h:
 

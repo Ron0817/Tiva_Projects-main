@@ -10,8 +10,10 @@ GEN_OPTS__FLAG :=
 GEN_CMDS__FLAG := 
 
 ORDERED_OBJS += \
+"./ff.obj" \
 "./icm20948.obj" \
 "./main.obj" \
+"./mmc-tm4c123g.obj" \
 "./spi.obj" \
 "./startup_ccs.obj" \
 "./utils/cpu_usage.obj" \
@@ -150,8 +152,8 @@ ICM_20948_SPI.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 # Other Targets
 clean:
 	-$(RM) $(EXE_OUTPUTS__QUOTED)
-	-$(RM) "icm20948.obj" "main.obj" "spi.obj" "startup_ccs.obj" "utils\cpu_usage.obj" "utils\uartstdio.obj" "utils\ustdlib.obj" 
-	-$(RM) "icm20948.d" "main.d" "spi.d" "startup_ccs.d" "utils\cpu_usage.d" "utils\uartstdio.d" "utils\ustdlib.d" 
+	-$(RM) "ff.obj" "icm20948.obj" "main.obj" "mmc-tm4c123g.obj" "spi.obj" "startup_ccs.obj" "utils\cpu_usage.obj" "utils\uartstdio.obj" "utils\ustdlib.obj" 
+	-$(RM) "ff.d" "icm20948.d" "main.d" "mmc-tm4c123g.d" "spi.d" "startup_ccs.d" "utils\cpu_usage.d" "utils\uartstdio.d" "utils\ustdlib.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

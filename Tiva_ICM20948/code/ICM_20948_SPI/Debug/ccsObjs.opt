@@ -1,5 +1,7 @@
+"./ff.obj"
 "./icm20948.obj"
 "./main.obj"
+"./mmc-tm4c123g.obj"
 "./spi.obj"
 "./startup_ccs.obj"
 "./utils/cpu_usage.obj"

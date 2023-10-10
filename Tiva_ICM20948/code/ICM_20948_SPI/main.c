@@ -1,9 +1,9 @@
-
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+
 #include "inc/hw_types.h"
 #include "inc/hw_memmap.h"
 #include "inc/hw_ints.h"
@@ -17,12 +17,19 @@
 #include "driverlib/ssi.h"
 #include "utils/uartstdio.h"
 #include "driverlib/timer.h"
+#include "driverlib/sysctl.h"
+#include "driverlib/systick.h"
+
 #include "spi.h"
+#include "ff.h"
+#include "diskio.h"
 #include "icm20948.h"
 
 /* ------------------------------------          Define Macros       ---------------------------------- */
 // Defind Max ui32TxBuffer size
 #define MAX_PLOAD 32
+#define LED_R GPIO_PIN_7 // [why need this?]
+#define LED_G GPIO_PIN_6
 
 // Define pin to LED color mapping.
 #define LED_0   GPIO_PIN_0
@@ -43,7 +50,7 @@ bool stop = 0;
 // gyro and accel axises
 axises gyro_axises;
 axises accel_axises;
-// For UARTprint =
+// For UARTprint
 axises_str gyro_axises_str;
 axises_str accel_axises_str;
 // Workaround for sprintf() to UARTprint 2's complement number
@@ -52,6 +59,12 @@ struct axises_sign{
     char y[2];
     char z[2];
 };
+
+// Variable for SD Card
+FATFS fatfs;
+FIL fil;
+FRESULT rc;
+UINT br, bw;
 
 
 /* ------------------------------------          Functions        ---------------------------------- */
@@ -207,7 +220,16 @@ void Timer5IntHandler(void)
                    accel_sign.y, (uint16_t) accel_axises.y, accel_sign.y, (uint16_t) accel_axises.z);
 }
 
+// Systick handler for FatFs library
+void SysTickHandler(void)
+{
+    ROM_SysTickIntDisable();
+    disk_timerproc();
+    ROM_SysTickIntEnable();
+}
 
+/* ------------------------------------          SD Card        ---------------------------------- */
+//sd_initial();
 
 /* ------------------------------------          Main Program        ---------------------------------- */
 // Add if #debug tag to all uartprintf()
@@ -217,6 +239,7 @@ int main(void)
     uint32_t ret;
     uint32_t ICM_sampling_frequency = 10;
 
+    // To be deleted
 //    // gyro and accel axises
 //    axises gyro_axises;
 //    axises accel_axises;
@@ -240,6 +263,33 @@ int main(void)
     // configure UART for console operation
     ConfigureUART();
     UARTprintf("UART was configured. Let's start\n");
+
+    /* ------------------------------------          SD Card init        ---------------------------------- */
+    // configure the systick timer for a 100Hz [--check this??] interrupt. required by the FatFs driver.
+    ROM_SysTickPeriodSet(ROM_SysCtlClockGet() / 100);
+    SysTickIntRegister(SysTickHandler);
+    ROM_SysTickEnable();
+    ROM_SysTickIntEnable();
+
+    // Delay 1 sec for SD card to initialise
+    ROM_SysCtlDelay(ROM_SysCtlClockGet()/3);
+
+    // [Why need this??]
+    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, LED_R | LED_G);
+    ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_R, LED_R);
+    ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
+
+    // mount the SD Card using logical drive 0.
+    rc = f_mount(0, &fatfs);
+    if(rc != FR_OK)
+    {
+        UARTprintf("CHECK: f_mount error\n");
+        return 0;
+    }
+    else
+    {
+        UARTprintf("CHECK: f_mount success!\n");
+    }
 
     /* ------------------------------------          SPI init        ---------------------------------- */
     // SSI3 Signals:
