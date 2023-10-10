@@ -170,11 +170,10 @@ void Timer5IntHandler(void)
     accel_axises.z = (uint16_t) accel_axises.z < 0x1fff ? (uint16_t) accel_axises.z : 0xffff - (uint16_t) accel_axises.z;
 
     // Print
-    UARTprintf("gyro_x = %d\n", (uint16_t)gyro_axises.x);
-    UARTprintf("gyro_val (x, y, z) = (%s%d,\t%s%d,\t%s%d) \t", gyro_sign.x, (uint16_t) gyro_axises.x,
-               gyro_sign.y, (uint16_t) gyro_axises.y, gyro_sign.z, (uint16_t) gyro_axises.z);
-    UARTprintf("accel_val (x, y, z) = (%s%d,\t%s%d,\t%s%d) \n", accel_sign.x, (uint16_t) accel_axises.x,
+    UARTprintf("Accel axises (x, y, z) = (%s%d, %s%d, %s%d) \t", accel_sign.x, (uint16_t) accel_axises.x,
                    accel_sign.y, (uint16_t) accel_axises.y, accel_sign.y, (uint16_t) accel_axises.z);
+    UARTprintf("Gyro axises (x, y, z) = (%s%d, %s%d, %s%d) \n", gyro_sign.x, (uint16_t) gyro_axises.x,
+                   gyro_sign.y, (uint16_t) gyro_axises.y, gyro_sign.z, (uint16_t) gyro_axises.z);
 
     // Store to buffer
 //    bufferA
@@ -327,17 +326,17 @@ int main(void)
     ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_R, LED_R);
     ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
 
-//    // mount the SD Card using logical drive 0.
-//    rc = f_mount(0, &fatfs);
-//    if(rc != FR_OK)
-//    {
-//        UARTprintf("CHECK: f_mount error\n");
-//        return 0;
-//    }
-//    else
-//    {
-//        UARTprintf("CHECK: f_mount success!\n");
-//    }
+    // mount the SD Card using logical drive 0.
+    rc = f_mount(0, &fatfs);
+    if(rc != FR_OK)
+    {
+        UARTprintf("CHECK: f_mount error\n");
+        return 0;
+    }
+    else
+    {
+        UARTprintf("CHECK: f_mount success!\n");
+    }
 //
 //    // open the configuration file
 //    rc = f_open(&fil, "config.txt", FA_READ);
@@ -371,7 +370,7 @@ int main(void)
     ROM_SysCtlDelay(SysCtlClockGet()/10); //lower diviser doesn't work properly
 
     /* ------------------------------------          Pushbutton Interrupt Init        ---------------------------------- */
-    SW_int_init();
+//    SW_int_init();
 
     /* ------------------------------------          Accel and Gyro init        ---------------------------------- */
     ret = icm20948_who_am_i();
