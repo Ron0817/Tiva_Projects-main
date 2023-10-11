@@ -43,7 +43,7 @@
 
 // Define variables that will be replaced by config.txt by users
 # define BUFFER_SIZE (4096)
-# define ICM_SAMPLING_FREQUENCY (10)
+# define ICM_SAMPLING_FREQUENCY (1500)
 /* ------------------------------------      Global Variables        ---------------------------------- */
 uint32_t ui32TxBuffer[MAX_PLOAD];
 uint32_t ui32RxBuffer[MAX_PLOAD];
@@ -75,12 +75,15 @@ UINT br, bw;
 uint32_t buffer_size = BUFFER_SIZE;
 uint16_t *bufferA;
 
+// Verify sample rate
+long int sample_nums = 0;
+
+
 
 /* ------------------------------------          Timers        ---------------------------------- */
 // Timer5 is used for triggering ICM gyro and accel SPI reading
 void timer5_init(uint32_t frequency)
 {
-    UARTprintf("**************Enter timer init\n");
     // Enable the timer peripheral
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER5);
 
@@ -170,7 +173,7 @@ void Timer5IntHandler(void)
     gyro_axises.y = (uint16_t) gyro_axises.y < 0x1fff ? (uint16_t) gyro_axises.y : 0xffff - (uint16_t) gyro_axises.y;
     gyro_axises.z = (uint16_t) gyro_axises.z < 0x1fff ? (uint16_t) gyro_axises.z : 0xffff - (uint16_t) gyro_axises.z;
 
-
+    sample_nums ++;
     // Print
 //    UARTprintf("Accel axises (x, y, z) = (%s%d, %s%d, %s%d) ", accel_sign.x, (uint16_t) accel_axises.x,
 //                   accel_sign.y, (uint16_t) accel_axises.y, accel_sign.y, (uint16_t) accel_axises.z);
@@ -179,17 +182,15 @@ void Timer5IntHandler(void)
 
     // When f_mount() uncommented, UARTprintf() long string causes data corruption (sign not printed, unexpected line change)
     // Use short string instead
-    UARTprintf("Accel axises =" );
-    UARTprintf("(%s%d, ", accel_sign.x, (uint16_t) accel_axises.x);
-    UARTprintf("%s%d, ", accel_sign.y, (uint16_t) accel_axises.y);
-    UARTprintf("%s%d) ", accel_sign.z, (uint16_t) accel_axises.z);
-    UARTprintf("Gyro axises =" );
-    UARTprintf("(%s%d, ", gyro_sign.x, (uint16_t) gyro_axises.x);
-    UARTprintf("%s%d, ", gyro_sign.y, (uint16_t) gyro_axises.y);
-    UARTprintf("%s%d)\n ", gyro_sign.z, (uint16_t) gyro_axises.z);
+//    UARTprintf("Accel axises =" );
+//    UARTprintf("(%s%d, ", accel_sign.x, (uint16_t) accel_axises.x);
+//    UARTprintf("%s%d, ", accel_sign.y, (uint16_t) accel_axises.y);
+//    UARTprintf("%s%d) ", accel_sign.z, (uint16_t) accel_axises.z);
+//    UARTprintf("Gyro axises =" );
+//    UARTprintf("(%s%d, ", gyro_sign.x, (uint16_t) gyro_axises.x);
+//    UARTprintf("%s%d, ", gyro_sign.y, (uint16_t) gyro_axises.y);
+//    UARTprintf("%s%d)\n ", gyro_sign.z, (uint16_t) gyro_axises.z);
 
-    // Store to buffer
-//    bufferA
 
 }
 
@@ -385,7 +386,7 @@ int main(void)
     ROM_SysCtlDelay(SysCtlClockGet()/10); //lower diviser doesn't work properly
 
     /* ------------------------------------          Pushbutton Interrupt Init        ---------------------------------- */
-//    SW_int_init();
+    SW_int_init();
 
     /* ------------------------------------          Accel and Gyro init        ---------------------------------- */
     ret = icm20948_who_am_i();
@@ -429,7 +430,9 @@ int main(void)
     }
 
     UARTprintf("Done\n");
-    UARTprintf("The program has been run for %d seconds\n", cnt);
+    UARTprintf("The program has been run for %d seconds, with %d number of gyro and accel samples\n", cnt, sample_nums);
+    UARTprintf("The sample rate is around %d samples per second\n", (int) (sample_nums / cnt));
+
 
     return 0;
 }
