@@ -43,7 +43,7 @@
 
 // Define variables that will be replaced by config.txt by users
 # define BUFFER_SIZE (4096)
-# define ICM_SAMPLING_FREQUENCY (1500)
+# define ICM_SAMPLING_FREQUENCY (1000)
 /* ------------------------------------      Global Variables        ---------------------------------- */
 uint32_t ui32TxBuffer[MAX_PLOAD];
 uint32_t ui32RxBuffer[MAX_PLOAD];
@@ -404,6 +404,7 @@ int main(void)
     {
         cnt ++;
         ROM_SysCtlDelay(ROM_SysCtlClockGet()/3);
+        UARTprintf("************* 1s ********************\n");
 
 //        icm20948_gyro_read_dps(&gyro_axises);
 //        icm20948_accel_read_g(&accel_axises);
