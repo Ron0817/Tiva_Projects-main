@@ -362,14 +362,16 @@ int main(void)
     {
         UARTprintf("CHECK: Configuration file found.\n");
 //        while(!f_eof(&fil)) {
+//            UARTprintf("CHECK: while looping.\n");
 //           f_gets((char *)read_buffer, sizeof(read_buffer), &fil);
 //           command = strtok(read_buffer, ":"); //strtok function breaks string into a series of tokens using a delimiter
 //           value = strtok(NULL, ":");
-//           if(strcmp(command, "sampling_frequency") == 0) {
+//           if(strcmp(command, "icm_sampling_frequency") == 0) {
 //               read_value = strtol(value, NULL,10); //strtol function converts string to integer
-//               UARTprintf("******************************sampling_frequency:%d\n", read_value);
+//               UARTprintf("******************************icm_sampling_frequency:%d\n", read_value);
 //           }
-//        }
+//          }
+        UARTprintf("CHECK: while done.\n");
     }
     // Set up buffer
     *bufferA = (uint16_t *)malloc(buffer_size*sizeof(uint16_t));
@@ -383,7 +385,7 @@ int main(void)
     ROM_SysCtlDelay(SysCtlClockGet()/10); //lower diviser doesn't work properly
 
     /* ------------------------------------          Pushbutton Interrupt Init        ---------------------------------- */
-    SW_int_init();
+//    SW_int_init();
 
     /* ------------------------------------          Accel and Gyro init        ---------------------------------- */
     ret = icm20948_who_am_i();
