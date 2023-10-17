@@ -53,10 +53,14 @@ __error__(char *pcFilename, uint32_t ui32Line)
 #endif
 
 /* ------------------------------------          Global Variables        ---------------------------------- */
-// buffers for raw data
+// buffers for Headstage data
 uint16_t *bufferA;
 uint16_t *bufferB;
 uint32_t buffer_size;
+
+// buffers for ICM data
+uint16_t *ICM_bufferA;
+uint32_t ICM_buffer_size;
 
 // variable to keep track of active buffer
 volatile bool bufferA_empty;
@@ -93,6 +97,7 @@ bool stop = 0;
 /*Variable required for SD Card R/W*/
 FATFS fatfs;
 FIL fil;
+FIL fil_icm;
 FRESULT rc;
 UINT br, bw;
 
@@ -239,6 +244,200 @@ void GPIOPortFHandler(void)
     GPIOIntClear(GPIO_PORTF_BASE, GPIO_PIN_4 | GPIO_PIN_0);
     UARTprintf("Exit GPIOF IRQ \n ");
 }
+
+
+/* ------------------------------------          UART         ---------------------------------- */
+// function to initialize onboard UART.
+void uart_init(void)
+{
+    // enable uart gpio.
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+
+    // configure gpio pins as uart.
+    // Port A0 is used for UART data receiving, and A1 is used for UART data transmitting
+    ROM_GPIOPinConfigure(GPIO_PA0_U0RX);
+    ROM_GPIOPinConfigure(GPIO_PA1_U0TX);
+
+    // enable the uart module.
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
+
+    // set clock for baud rate generation.
+    ROM_UARTClockSourceSet(UART0_BASE, UART_CLOCK_SYSTEM);
+
+    // set pin type to uart.
+    ROM_GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+
+    // configure uart 0 at 115200 bps.
+    UARTStdioConfig(0, 115200, SysCtlClockGet());
+}
+
+
+/* ------------------------------------          SPI         ---------------------------------- */
+// function to initialize SSI module
+void SSI_init(void)
+{
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_SSI0);
+
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+    // ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);
+
+    ROM_GPIOPinConfigure(GPIO_PA2_SSI0CLK);
+    // ROM_GPIOPinConfigure(GPIO_PC4_SSI0FSS);
+    ROM_GPIOPinConfigure(GPIO_PA4_SSI0RX);
+    ROM_GPIOPinConfigure(GPIO_PA5_SSI0TX);
+
+
+    // port A3 is used for FSS output
+    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, GPIO_PIN_3);
+    ROM_GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3, 0b0001000);
+
+
+    ROM_GPIOPinTypeSSI(GPIO_PORTA_BASE, GPIO_PIN_5 | GPIO_PIN_4 | GPIO_PIN_2);
+    // ROM_GPIOPinTypeSSI(GPIO_PORTC_BASE, GPIO_PIN_4);
+
+    ROM_SSIConfigSetExpClk(SSI0_BASE, ROM_SysCtlClockGet(), SSI_FRF_MOTO_MODE_0, SSI_MODE_MASTER, 10000000, 16);
+
+    ROM_SSIEnable(SSI0_BASE);
+
+    while(ROM_SSIDataGetNonBlocking(SSI0_BASE, &pui32DataRx[0]))
+    {
+        // clear the receive FIFO
+    }
+}
+
+
+/* ------------------------------------          Pushbutton        ---------------------------------- */
+// Pushbutton init - Would affect UARTprintf somehow - fix it later
+void SW_int_init(void){
+// Remove the Lock present on Switch SW2 (connected to PF0) and commit the change
+   HWREG(GPIO_PORTF_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY;
+   HWREG(GPIO_PORTF_BASE + GPIO_O_CR) |= GPIO_PIN_4;
+
+   // Set the System clock to 50MHz and enable the clock for peripheral PortF.
+   ROM_SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_INT | SYSCTL_MAIN_OSC_DIS); // 50MHz System Clock
+
+   // Configure input for PF4(SW1) and PF0(SW2)
+   ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+   ROM_GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_4);
+
+   // Set up IRQ for PortF 4 |0
+   GPIOIntRegister(GPIO_PORTF_BASE, GPIOPortFHandler);
+   ROM_GPIOIntTypeSet(GPIO_PORTF_BASE,  GPIO_PIN_4, GPIO_FALLING_EDGE);
+   GPIOIntEnable(GPIO_PORTF_BASE, GPIO_PIN_4);
+
+   // Connect PF0, PF4 to internal Pull-up resistors and set 2 mA as current strength.
+   ROM_GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_4, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+}
+
+/* ------------------------------------          Timers        ---------------------------------- */
+
+// Timer0 is used for triggering SPI data transfer
+void timer0_init(uint32_t frequency)
+{
+    // Enable the timer peripheral
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
+
+    // Timer should run periodically
+    // Full-width periodic timer
+    ROM_TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
+
+    // Set the compare value of the timer
+    // This corresponds to the sampling frequency
+    ROM_TimerLoadSet(TIMER0_BASE, TIMER_A, (ROM_SysCtlClockGet()/frequency)-1);
+
+    // Enable the timer interrupt
+    ROM_TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+    ROM_IntEnable(INT_TIMER0A);
+
+    // Enable Timer0
+    ROM_TimerEnable(TIMER0_BASE, TIMER_A);
+
+}
+
+// Timer1 is used for delivering stimulation for first channel
+// Timer1 load should be manually set
+void timer1_init(void)
+{
+    // Enable the timer peripheral
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER1);
+
+    // Timer should run periodically
+    // Full-width periodic timer
+    ROM_TimerConfigure(TIMER1_BASE, TIMER_CFG_PERIODIC);
+
+    // Enable the timer interrupt
+    ROM_TimerIntEnable(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
+    ROM_IntEnable(INT_TIMER1A);
+}
+// Timer2 is used for delivering stimulation for second channel
+// Timer2 load should be manually set
+void timer2_init(void)
+{
+    // Enable the timer peripheral
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER2);
+
+    // Timer should run periodically
+    // Full-width periodic timer
+    ROM_TimerConfigure(TIMER2_BASE, TIMER_CFG_PERIODIC);
+
+    // Enable the timer interrupt
+    ROM_TimerIntEnable(TIMER2_BASE, TIMER_TIMA_TIMEOUT);
+    ROM_IntEnable(INT_TIMER2A);
+}
+// Timer3 is used for delivering stimulation for third channel
+// Timer3 load should be manually set
+void timer3_init(void)
+{
+    // Enable the timer peripheral
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER3);
+
+    // Timer should run periodically
+    // Full-width periodic timer
+    ROM_TimerConfigure(TIMER3_BASE, TIMER_CFG_PERIODIC);
+
+    // Enable the timer interrupt
+    ROM_TimerIntEnable(TIMER3_BASE, TIMER_TIMA_TIMEOUT);
+    ROM_IntEnable(INT_TIMER3A);
+}
+// Timer4 is used for delivering stimulation for fourth channel
+// Timer4 load should be manually set
+void timer4_init(void)
+{
+    // Enable the timer peripheral
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER4);
+
+    // Timer should run periodically
+    // Full-width periodic timer
+    ROM_TimerConfigure(TIMER4_BASE, TIMER_CFG_PERIODIC);
+
+    // Enable the timer interrupt
+    ROM_TimerIntEnable(TIMER4_BASE, TIMER_TIMA_TIMEOUT);
+    ROM_IntEnable(INT_TIMER4A);
+}
+// Timer5 is used for triggering ICM gyro and accel SPI reading
+void timer5_init(uint32_t frequency)
+{
+    // Enable the timer peripheral
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER5);
+
+    // Timer should run periodically
+    // Full-width periodic timer
+    ROM_TimerConfigure(TIMER5_BASE, TIMER_CFG_PERIODIC);
+
+    // Set the compare value of the timer
+    // This corresponds to the sampling frequency
+    ROM_TimerLoadSet(TIMER5_BASE, TIMER_A, (ROM_SysCtlClockGet()/frequency)-1);
+
+    // Enable the timer interrupt
+    ROM_TimerIntEnable(TIMER5_BASE, TIMER_TIMA_TIMEOUT);
+    ROM_IntEnable(INT_TIMER5A);
+
+    // Enable Timer5
+    ROM_TimerEnable(TIMER5_BASE, TIMER_A);
+
+}
+
+/* ------------------------------------          Timer Handlers       ---------------------------------- */
 
 // systick handler for FatFs library
 void
@@ -623,6 +822,9 @@ void Timer5IntHandler(void)
     static struct axises_sign gyro_sign;
     static struct axises_sign accel_sign;
 
+    // Buffer count
+    static int count = 0;
+
     // Clear the timer interrupt. Recommended to do so earilest as possible.
     ROM_TimerIntClear(TIMER5_BASE, TIMER_TIMA_TIMEOUT);
 
@@ -639,25 +841,6 @@ void Timer5IntHandler(void)
     // Interesting findings that the following sprintf() doesn't work in this ISR.
     // Reasons might be that it hangs the ISR and takes too long time.
     // A workaround was made to hardcode the sign of gyro and accel readings
-//    ret_val = (uint16_t) gyro_axises.x < 0x1fff ? sprintf(gyro_axises_str.x, "%d", (uint16_t) gyro_axises.x)
-//            : sprintf(gyro_axises_str.x, "-%d", 0xffff - (uint16_t) gyro_axises.x);
-//    ret_val = (uint16_t) gyro_axises.y < 0x1fff ? sprintf(gyro_axises_str.y, "%d", (uint16_t) gyro_axises.y)
-//            : sprintf(gyro_axises_str.y, "-%d", 0xffff - (uint16_t) gyro_axises.y);
-//    ret_val = (uint16_t) gyro_axises.z < 0x1fff ? sprintf(gyro_axises_str.z, "%d", (uint16_t) gyro_axises.z)
-//            : sprintf(gyro_axises_str.z, "-%d", 0xffff - (uint16_t) gyro_axises.z);
-//
-//    ret_val = (uint16_t) accel_axises.x < 0x1fff ? sprintf(accel_axises_str.x, "%d", (uint16_t) accel_axises.x)
-//            : sprintf(accel_axises_str.x, "-%d", 0xffff - (uint16_t) accel_axises.x);
-//    ret_val = (uint16_t) accel_axises.y < 0x1fff ? sprintf(accel_axises_str.y, "%d", (uint16_t) accel_axises.y)
-//            : sprintf(accel_axises_str.y, "-%d", 0xffff - (uint16_t) accel_axises.y);
-//    ret_val = (uint16_t) accel_axises.z < 0x1fff ? sprintf(accel_axises_str.z, "%d", (uint16_t) accel_axises.z)
-//            : sprintf(accel_axises_str.z, "-%d", 0xffff - (uint16_t) accel_axises.z);
-
-//    UARTprintf("gyro_val (x, y, z) = (%s,\t%s,\t%s) \t", gyro_axises_str.x, gyro_axises_str.y, gyro_axises_str.z);
-//    UARTprintf("accel_val (x, y, z) = (%s,\t%s,\t%s) \n", accel_axises_str.x, accel_axises_str.y, accel_axises_str.z);
-
-    // Convert 2's comp num and print
-
     (uint16_t) accel_axises.x < 0x1fff ? strcpy(accel_sign.x, "+") : strcpy(accel_sign.x, "-");
     (uint16_t) accel_axises.y < 0x1fff ? strcpy(accel_sign.y, "+") : strcpy(accel_sign.y, "-");
     (uint16_t) accel_axises.z < 0x1fff ? strcpy(accel_sign.z, "+") : strcpy(accel_sign.z, "-");
@@ -679,7 +862,6 @@ void Timer5IntHandler(void)
 //    UARTprintf("Gyro axises (x, y, z) = (%s%d, %s%d, %s%d) \n", gyro_sign.x, (uint16_t) gyro_axises.x,
 //                   gyro_sign.y, (uint16_t) gyro_axises.y, gyro_sign.z, (uint16_t) gyro_axises.z);
 
-    // When f_mount() uncommented, UARTprintf() long string causes data corruption (sign not printed, unexpected line change)
     // Use short string instead
     UARTprintf("Accel axises =" );
     UARTprintf("(%s%d, ", accel_sign.x, (uint16_t) accel_axises.x);
@@ -690,197 +872,17 @@ void Timer5IntHandler(void)
     UARTprintf("%s%d, ", gyro_sign.y, (uint16_t) gyro_axises.y);
     UARTprintf("%s%d)\n ", gyro_sign.z, (uint16_t) gyro_axises.z);
 
-
-}
-
-/* ------------------------------------          UART         ---------------------------------- */
-// function to initialize onboard UART.
-void uart_init(void)
-{
-    // enable uart gpio.
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
-
-    // configure gpio pins as uart.
-    // Port A0 is used for UART data receiving, and A1 is used for UART data transmitting
-    ROM_GPIOPinConfigure(GPIO_PA0_U0RX);
-    ROM_GPIOPinConfigure(GPIO_PA1_U0TX);
-
-    // enable the uart module.
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
-
-    // set clock for baud rate generation.
-    ROM_UARTClockSourceSet(UART0_BASE, UART_CLOCK_SYSTEM);
-
-    // set pin type to uart.
-    ROM_GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
-
-    // configure uart 0 at 115200 bps.
-    UARTStdioConfig(0, 115200, SysCtlClockGet());
-}
-
-
-/* ------------------------------------          SPI         ---------------------------------- */
-// function to initialize SSI module
-void SSI_init(void)
-{
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_SSI0);
-
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
-    // ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);
-
-    ROM_GPIOPinConfigure(GPIO_PA2_SSI0CLK);
-    // ROM_GPIOPinConfigure(GPIO_PC4_SSI0FSS);
-    ROM_GPIOPinConfigure(GPIO_PA4_SSI0RX);
-    ROM_GPIOPinConfigure(GPIO_PA5_SSI0TX);
-
-
-    // port A3 is used for FSS output
-    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, GPIO_PIN_3);
-    ROM_GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_3, 0b0001000);
-
-
-    ROM_GPIOPinTypeSSI(GPIO_PORTA_BASE, GPIO_PIN_5 | GPIO_PIN_4 | GPIO_PIN_2);
-    // ROM_GPIOPinTypeSSI(GPIO_PORTC_BASE, GPIO_PIN_4);
-
-    ROM_SSIConfigSetExpClk(SSI0_BASE, ROM_SysCtlClockGet(), SSI_FRF_MOTO_MODE_0, SSI_MODE_MASTER, 10000000, 16);
-
-    ROM_SSIEnable(SSI0_BASE);
-
-    while(ROM_SSIDataGetNonBlocking(SSI0_BASE, &pui32DataRx[0]))
+    // Store to buffer for storing to the SD card
+    ICM_bufferA[count++] = accel_axises.x;
+    ICM_bufferA[count++] = accel_axises.y;
+    ICM_bufferA[count++] = accel_axises.z;
+    ICM_bufferA[count++] = gyro_axises.x;
+    ICM_bufferA[count++] = gyro_axises.y;
+    ICM_bufferA[count++] = gyro_axises.z;
+    if(count == buffer_size)
     {
-        // clear the receive FIFO
+        count = 0;
     }
-}
-
-
-/* ------------------------------------          Pushbutton        ---------------------------------- */
-// Pushbutton init - Would affect UARTprintf somehow - fix it later
-void SW_int_init(void){
-// Remove the Lock present on Switch SW2 (connected to PF0) and commit the change
-   HWREG(GPIO_PORTF_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY;
-   HWREG(GPIO_PORTF_BASE + GPIO_O_CR) |= GPIO_PIN_4;
-
-   // Set the System clock to 50MHz and enable the clock for peripheral PortF.
-   ROM_SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_INT | SYSCTL_MAIN_OSC_DIS); // 50MHz System Clock
-
-   // Configure input for PF4(SW1) and PF0(SW2)
-   ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
-   ROM_GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_4);
-
-   // Set up IRQ for PortF 4 |0
-   GPIOIntRegister(GPIO_PORTF_BASE, GPIOPortFHandler);
-   ROM_GPIOIntTypeSet(GPIO_PORTF_BASE,  GPIO_PIN_4, GPIO_FALLING_EDGE);
-   GPIOIntEnable(GPIO_PORTF_BASE, GPIO_PIN_4);
-
-   // Connect PF0, PF4 to internal Pull-up resistors and set 2 mA as current strength.
-   ROM_GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_4, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
-}
-
-/* ------------------------------------          Timers        ---------------------------------- */
-
-// Timer0 is used for triggering SPI data transfer
-void timer0_init(uint32_t frequency)
-{
-    // Enable the timer peripheral
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
-
-    // Timer should run periodically
-    // Full-width periodic timer
-    ROM_TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
-
-    // Set the compare value of the timer
-    // This corresponds to the sampling frequency
-    ROM_TimerLoadSet(TIMER0_BASE, TIMER_A, (ROM_SysCtlClockGet()/frequency)-1);
-
-    // Enable the timer interrupt
-    ROM_TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-    ROM_IntEnable(INT_TIMER0A);
-
-    // Enable Timer0
-    ROM_TimerEnable(TIMER0_BASE, TIMER_A);
-
-}
-
-// Timer1 is used for delivering stimulation for first channel
-// Timer1 load should be manually set
-void timer1_init(void)
-{
-    // Enable the timer peripheral
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER1);
-
-    // Timer should run periodically
-    // Full-width periodic timer
-    ROM_TimerConfigure(TIMER1_BASE, TIMER_CFG_PERIODIC);
-
-    // Enable the timer interrupt
-    ROM_TimerIntEnable(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
-    ROM_IntEnable(INT_TIMER1A);
-}
-// Timer2 is used for delivering stimulation for second channel
-// Timer2 load should be manually set
-void timer2_init(void)
-{
-    // Enable the timer peripheral
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER2);
-
-    // Timer should run periodically
-    // Full-width periodic timer
-    ROM_TimerConfigure(TIMER2_BASE, TIMER_CFG_PERIODIC);
-
-    // Enable the timer interrupt
-    ROM_TimerIntEnable(TIMER2_BASE, TIMER_TIMA_TIMEOUT);
-    ROM_IntEnable(INT_TIMER2A);
-}
-// Timer3 is used for delivering stimulation for third channel
-// Timer3 load should be manually set
-void timer3_init(void)
-{
-    // Enable the timer peripheral
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER3);
-
-    // Timer should run periodically
-    // Full-width periodic timer
-    ROM_TimerConfigure(TIMER3_BASE, TIMER_CFG_PERIODIC);
-
-    // Enable the timer interrupt
-    ROM_TimerIntEnable(TIMER3_BASE, TIMER_TIMA_TIMEOUT);
-    ROM_IntEnable(INT_TIMER3A);
-}
-// Timer4 is used for delivering stimulation for fourth channel
-// Timer4 load should be manually set
-void timer4_init(void)
-{
-    // Enable the timer peripheral
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER4);
-
-    // Timer should run periodically
-    // Full-width periodic timer
-    ROM_TimerConfigure(TIMER4_BASE, TIMER_CFG_PERIODIC);
-
-    // Enable the timer interrupt
-    ROM_TimerIntEnable(TIMER4_BASE, TIMER_TIMA_TIMEOUT);
-    ROM_IntEnable(INT_TIMER4A);
-}
-// Timer5 is used for triggering ICM gyro and accel SPI reading
-void timer5_init(uint32_t frequency)
-{
-    // Enable the timer peripheral
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER5);
-
-    // Timer should run periodically
-    // Full-width periodic timer
-    ROM_TimerConfigure(TIMER5_BASE, TIMER_CFG_PERIODIC);
-
-    // Set the compare value of the timer
-    // This corresponds to the sampling frequency
-    ROM_TimerLoadSet(TIMER5_BASE, TIMER_A, (ROM_SysCtlClockGet()/frequency)-1);
-
-    // Enable the timer interrupt
-    ROM_TimerIntEnable(TIMER5_BASE, TIMER_TIMA_TIMEOUT);
-    ROM_IntEnable(INT_TIMER5A);
-
-    // Enable Timer5
-    ROM_TimerEnable(TIMER5_BASE, TIMER_A);
 
 }
 
@@ -935,8 +937,6 @@ int main(void)
 
     char def_filename[16];
     char filename[16];
-
-
 
     // counter for current file
     uint32_t file_counter = 0;
@@ -1627,6 +1627,22 @@ int main(void)
 #ifdef DEBUG
         UARTprintf("Now writing to file: %s\n", filename);
 #endif
+    }
+
+    // Open file for ICM writing
+    rc = f_open(&fil_icm, "ICM20948Readings.txt", FA_CREATE_ALWAYS | FA_WRITE);
+    if(rc != FR_OK)
+    {
+    #ifdef DEBUG
+            UARTprintf("Cannot open file for writing ICM data. Bye!\n");
+    #endif
+            return 0;
+        }
+        else
+        {
+    #ifdef DEBUG
+            UARTprintf("Now ICM writing to file: %s\n", filename);
+    #endif
     }
 
 
