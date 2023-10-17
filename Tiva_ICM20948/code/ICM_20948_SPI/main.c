@@ -43,7 +43,7 @@
 
 // Define variables that will be replaced by config.txt by users
 # define BUFFER_SIZE (4096)
-# define ICM_SAMPLING_FREQUENCY (1500)
+# define ICM_SAMPLING_FREQUENCY (10)
 /* ------------------------------------      Global Variables        ---------------------------------- */
 uint32_t ui32TxBuffer[MAX_PLOAD];
 uint32_t ui32RxBuffer[MAX_PLOAD];
@@ -182,14 +182,14 @@ void Timer5IntHandler(void)
 
     // When f_mount() uncommented, UARTprintf() long string causes data corruption (sign not printed, unexpected line change)
     // Use short string instead
-//    UARTprintf("Accel axises =" );
-//    UARTprintf("(%s%d, ", accel_sign.x, (uint16_t) accel_axises.x);
-//    UARTprintf("%s%d, ", accel_sign.y, (uint16_t) accel_axises.y);
-//    UARTprintf("%s%d) ", accel_sign.z, (uint16_t) accel_axises.z);
-//    UARTprintf("Gyro axises =" );
-//    UARTprintf("(%s%d, ", gyro_sign.x, (uint16_t) gyro_axises.x);
-//    UARTprintf("%s%d, ", gyro_sign.y, (uint16_t) gyro_axises.y);
-//    UARTprintf("%s%d)\n ", gyro_sign.z, (uint16_t) gyro_axises.z);
+    UARTprintf("Accel axises =" );
+    UARTprintf("(%s%d, ", accel_sign.x, (uint16_t) accel_axises.x);
+    UARTprintf("%s%d, ", accel_sign.y, (uint16_t) accel_axises.y);
+    UARTprintf("%s%d) ", accel_sign.z, (uint16_t) accel_axises.z);
+    UARTprintf("Gyro axises =" );
+    UARTprintf("(%s%d, ", gyro_sign.x, (uint16_t) gyro_axises.x);
+    UARTprintf("%s%d, ", gyro_sign.y, (uint16_t) gyro_axises.y);
+    UARTprintf("%s%d)\n ", gyro_sign.z, (uint16_t) gyro_axises.z);
 
 
 }
@@ -261,7 +261,7 @@ void count_to_message(uint32_t count_val, uint32_t ui32TxBuffer[MAX_PLOAD]){
 
 // Pushbutton init - Only SW1(PF4) enabled as SW2(PF0) conflict with MISO1
 void SW_int_init(void){
-// Remove the Lock present on Switch SW2 (connected to PF0) and commit the change
+// Remove the 2 present on Switch SW2 (connected to PF0) and commit the change
    HWREG(GPIO_PORTF_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY;
    HWREG(GPIO_PORTF_BASE + GPIO_O_CR) |= GPIO_PIN_4;
 
@@ -341,39 +341,39 @@ int main(void)
     ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
 
     // mount the SD Card using logical drive 0.
-    rc = f_mount(0, &fatfs);
-    if(rc != FR_OK)
-    {
-        UARTprintf("CHECK: f_mount error\n");
-        return 0;
-    }
-    else
-    {
-        UARTprintf("CHECK: f_mount success!\n");
-    }
-
-    // open the configuration file
-    rc = f_open(&fil, "confighd.txt", FA_READ);
-    if(rc != FR_OK)
-    {
-        UARTprintf("CHECK: Configuration file doesn't exist. Bye!\n");
-        return 0;
-    }
-    else
-    {
-        UARTprintf("CHECK: Configuration file found.\n");
-//        while(!f_eof(&fil)) {
-//            UARTprintf("CHECK: while looping.\n");
-//           f_gets((char *)read_buffer, sizeof(read_buffer), &fil);
-//           command = strtok(read_buffer, ":"); //strtok function breaks string into a series of tokens using a delimiter
-//           value = strtok(NULL, ":");
-//           if(strcmp(command, "icm_sampling_frequency") == 0) {
-//               read_value = strtol(value, NULL,10); //strtol function converts string to integer
-//               UARTprintf("******************************icm_sampling_frequency:%d\n", read_value);
-//           }
-//          }
-        UARTprintf("CHECK: while done.\n");
-    }
+//    rc = f_mount(0, &fatfs);
+//    if(rc != FR_OK)
+//    {
+//        UARTprintf("CHECK: f_mount error\n");
+//        return 0;
+//    }
+//    else
+//    {
+//        UARTprintf("CHECK: f_mount success!\n");
+//    }
+//
+//    // open the configuration file
+//    rc = f_open(&fil, "confighd.txt", FA_READ);
+//    if(rc != FR_OK)
+//    {
+//        UARTprintf("CHECK: Configuration file doesn't exist. Bye!\n");
+//        return 0;
+//    }
+//    else
+//    {
+//        UARTprintf("CHECK: Configuration file found.\n");
+////        while(!f_eof(&fil)) {
+////            UARTprintf("CHECK: while looping.\n");
+////           f_gets((char *)read_buffer, sizeof(read_buffer), &fil);
+////           command = strtok(read_buffer, ":"); //strtok function breaks string into a series of tokens using a delimiter
+////           value = strtok(NULL, ":");
+////           if(strcmp(command, "icm_sampling_frequency") == 0) {
+////               read_value = strtol(value, NULL,10); //strtol function converts string to integer
+////               UARTprintf("******************************icm_sampling_frequency:%d\n", read_value);
+////           }
+////          }
+//        UARTprintf("CHECK: while done.\n");
+//    }
     // Set up buffer
     *bufferA = (uint16_t *)malloc(buffer_size*sizeof(uint16_t));
 

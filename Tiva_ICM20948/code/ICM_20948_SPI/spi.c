@@ -24,7 +24,7 @@ void SPIInit(void)
 	ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB); // CE and IRQ are on Port B
 
 	//my addition
-	ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA); // CE and IRQ are on Port B
+//	ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA); // CE and IRQ are on Port B
 
 	// Configure GPIO pins for special functions except CSN, CE and IRQ which are under software control
 	GPIOPinConfigure(GPIO_PD0_SSI3CLK);
@@ -34,10 +34,12 @@ void SPIInit(void)
 
 	// Configure GPIO pins for CE, CSN and IRQ
 	ROM_GPIOPinTypeGPIOOutput(SPI_PORT_BASE, CSN);
-	ROM_GPIOPinTypeGPIOOutput(CE_BASE, CE);
+//	ROM_GPIOPinTypeGPIOOutput(CE_BASE, CE);
+    ROM_GPIOPinTypeGPIOOutput(CE_BASE, GPIO_PIN_2);
+
 
 	//my addition
-	ROM_GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, MY_CE);
+//	ROM_GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, MY_CE);
 
 
 	//Configure and enable SSI port
