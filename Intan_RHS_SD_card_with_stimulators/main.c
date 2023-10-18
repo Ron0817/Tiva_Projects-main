@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+//#include <pthread.h>
 #include "inc/hw_memmap.h"
 #include "inc/hw_ints.h"
 #include "inc/hw_ssi.h"
@@ -41,7 +42,7 @@
 #define LED_G GPIO_PIN_6 // red LED
 #define BUFFER_A 0
 #define BUFFER_B 1
-#define ICM_SAMPLING_FREQUENCY (10)
+#define ICM_SAMPLING_FREQUENCY (1)
 
 #define DEBUG 1;
 // the error routine that is called if the driver library encounters an error
@@ -51,6 +52,7 @@ __error__(char *pcFilename, uint32_t ui32Line)
 {
 }
 #endif
+
 
 /* ------------------------------------          Global Variables        ---------------------------------- */
 // buffers for Headstage data
@@ -67,6 +69,7 @@ volatile bool bufferA_empty;
 volatile bool bufferB_empty;
 volatile bool buffer_mode;
 volatile bool storage_on;
+bool ICM_write_ready;
 
 int n;
 uint32_t pui32DataRx[1];
@@ -857,32 +860,53 @@ void Timer5IntHandler(void)
 
 //    sample_nums ++;
     // Print
-//    UARTprintf("Accel axises (x, y, z) = (%s%d, %s%d, %s%d) ", accel_sign.x, (uint16_t) accel_axises.x,
-//                   accel_sign.y, (uint16_t) accel_axises.y, accel_sign.y, (uint16_t) accel_axises.z);
-//    UARTprintf("Gyro axises (x, y, z) = (%s%d, %s%d, %s%d) \n", gyro_sign.x, (uint16_t) gyro_axises.x,
-//                   gyro_sign.y, (uint16_t) gyro_axises.y, gyro_sign.z, (uint16_t) gyro_axises.z);
-
-    // Use short string instead
-    UARTprintf("Accel axises =" );
-    UARTprintf("(%s%d, ", accel_sign.x, (uint16_t) accel_axises.x);
-    UARTprintf("%s%d, ", accel_sign.y, (uint16_t) accel_axises.y);
-    UARTprintf("%s%d) ", accel_sign.z, (uint16_t) accel_axises.z);
-    UARTprintf("Gyro axises =" );
-    UARTprintf("(%s%d, ", gyro_sign.x, (uint16_t) gyro_axises.x);
-    UARTprintf("%s%d, ", gyro_sign.y, (uint16_t) gyro_axises.y);
-    UARTprintf("%s%d)\n ", gyro_sign.z, (uint16_t) gyro_axises.z);
+    UARTprintf("Accel axises (x, y, z) = (%s%d, %s%d, %s%d) ", accel_sign.x, (uint16_t) accel_axises.x,
+                   accel_sign.y, (uint16_t) accel_axises.y, accel_sign.y, (uint16_t) accel_axises.z);
+    UARTprintf("Gyro axises (x, y, z) = (%s%d, %s%d, %s%d) \n", gyro_sign.x, (uint16_t) gyro_axises.x,
+                   gyro_sign.y, (uint16_t) gyro_axises.y, gyro_sign.z, (uint16_t) gyro_axises.z);
 
     // Store to buffer for storing to the SD card
-    ICM_bufferA[count++] = accel_axises.x;
-    ICM_bufferA[count++] = accel_axises.y;
-    ICM_bufferA[count++] = accel_axises.z;
-    ICM_bufferA[count++] = gyro_axises.x;
-    ICM_bufferA[count++] = gyro_axises.y;
-    ICM_bufferA[count++] = gyro_axises.z;
-    if(count == buffer_size)
+//    ICM_bufferA[count++] = (uint16_t) accel_axises.x + 1;
+//    ICM_bufferA[count++] = (uint16_t) accel_axises.y + 1;
+//    ICM_bufferA[count++] = (uint16_t) accel_axises.z + 1;
+//    ICM_bufferA[count++] = (uint16_t) gyro_axises.x + 1;
+//    ICM_bufferA[count++] = (uint16_t) gyro_axises.y + 1;
+//    ICM_bufferA[count++] = (uint16_t) gyro_axises.z + 1;
+    ICM_bufferA[count++] = (uint16_t) 1;
+    ICM_bufferA[count++] = (uint16_t) 2;
+    ICM_bufferA[count++] = (uint16_t) 3;
+    ICM_bufferA[count++] = (uint16_t) 4;
+    ICM_bufferA[count++] = (uint16_t) 5;
+    ICM_bufferA[count++] = (uint16_t) 6;
+//    ICM_bufferA[count++] = count;
+
+    if(count == 6 )
     {
         count = 0;
+        rc = f_write(&fil_icm, ICM_bufferA, uint16_len(ICM_bufferA) * 2, &bw); // write to SD Card
+        if(rc != FR_OK)
+        {
+#ifdef DEBUG
+            UARTprintf("ICM Cannot write to file! Bye!\n");
+#endif
+           return 0;
+        }
+        else
+        {
+           // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
+#ifdef DEBUG
+            UARTprintf("Wrote ICM_bufferA for %d words\n", uint16_len(ICM_bufferA));
+#endif
+        }
     }
+    int len = uint16_len(ICM_bufferA);
+    UARTprintf("NOW Count: %d ICM_bufferA size: %d\n ", count, len);
+    int i = 0;
+    for (i = 0; i < len; i++)
+    {
+        UARTprintf("%d\t",ICM_bufferA[i]);
+    }
+
 
 }
 
@@ -894,6 +918,8 @@ int main(void)
 
     // ICM sampling frequency
     uint32_t ICM_sampling_frequency = ICM_SAMPLING_FREQUENCY;
+
+    ICM_write_ready = true;
 
     dummy = 0;
 
@@ -1346,6 +1372,10 @@ int main(void)
     bufferA = (uint16_t *)malloc(buffer_size*sizeof(uint16_t));
     bufferB = (uint16_t *)malloc(buffer_size*sizeof(uint16_t));
 
+    // TODO: Read ICM_buffer_size from confighd.txt
+    ICM_buffer_size = buffer_size;
+    ICM_bufferA = (uint16_t *)calloc(ICM_buffer_size, sizeof(uint16_t));
+
     // initial config
     buffer_mode = BUFFER_A; // first start from buffer A
     storage_on = false; // currently write to SD card is disabled
@@ -1391,17 +1421,6 @@ int main(void)
     SPIInit();
     ROM_SysCtlDelay(SysCtlClockGet()/10);
 
-    SW_int_init();
-
-    /* ------------------------------------          Accel and Gyro init        ---------------------------------- */
-    ret = ICM_SPI_Read(0x00);
-    UARTprintf("ICM20948 is 0xea ? -> 0x%x\n", ret);
-    icm20948_init();
-    ROM_SysCtlDelay(SysCtlClockGet());
-    UARTprintf("Init check done. Start Reading ...\n");
-
-    /* ------------------------------------          Timer5 init        ---------------------------------- */
-    timer5_init(ICM_sampling_frequency);
 
     /***********************************************************/
     /* Initialize the headstage */
@@ -1611,39 +1630,53 @@ int main(void)
     //Timer 4 load
     ROM_TimerLoadSet(TIMER4_BASE, TIMER_A, (ROM_SysCtlClockGet()/10000-1));
 
+    /* ------------------------------------          Pushbuhtton init        ---------------------------------- */
+    SW_int_init();
+
+    /* ------------------------------------          Accel and Gyro init        ---------------------------------- */
+    ret = ICM_SPI_Read(0x00);
+    UARTprintf("ICM20948 is 0xea ? -> 0x%x\n", ret);
+    icm20948_init();
+    ROM_SysCtlDelay(SysCtlClockGet());
+    UARTprintf("Init check done. Start Reading ...\n");
+
+    /* ------------------------------------          Timer5 init        ---------------------------------- */
+    timer5_init(ICM_sampling_frequency);
+
     /***********************************************************/
     /* Open first file to write */
     /***********************************************************/
-    rc = f_open(&fil, filename, FA_CREATE_ALWAYS | FA_WRITE);
-    if(rc != FR_OK)
-    {
-#ifdef DEBUG
-        UARTprintf("Cannot open file for writing data. Bye!\n");
-#endif
-        return 0;
-    }
-    else
-    {
-#ifdef DEBUG
-        UARTprintf("Now writing to file: %s\n", filename);
-#endif
-    }
+//    rc = f_open(&fil, filename, FA_CREATE_ALWAYS | FA_WRITE);
+//    if(rc != FR_OK)
+//    {
+//#ifdef DEBUG
+//        UARTprintf("Cannot open file for writing data. Bye!\n");
+//#endif
+//        return 0;
+//    }
+//    else
+//    {
+//#ifdef DEBUG
+//        UARTprintf("Now writing to file: %s\n", filename);
+//#endif
+//    }
 
     // Open file for ICM writing
-    rc = f_open(&fil_icm, "ICM20948Readings.txt", FA_CREATE_ALWAYS | FA_WRITE);
+    rc = f_open(&fil_icm, strcat("ICM ", filename), FA_CREATE_ALWAYS | FA_WRITE);
     if(rc != FR_OK)
     {
     #ifdef DEBUG
-            UARTprintf("Cannot open file for writing ICM data. Bye!\n");
+            UARTprintf("Cannot open file for writing ICM data: %s\n", strcat("ICM ", filename));
     #endif
             return 0;
         }
         else
         {
     #ifdef DEBUG
-            UARTprintf("Now ICM writing to file: %s\n", filename);
+            UARTprintf("Now ICM writing to file: %s\n", strcat("ICM ", filename));
     #endif
     }
+    ROM_SysCtlDelay(ROM_SysCtlClockGet());
 
 
     // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_R, LED_R); // turn off red LED
@@ -1664,25 +1697,25 @@ int main(void)
             if(i == store_count) {
                 //ROM_TimerLoadSet(TIMER1_BASE, TIMER_A, (ROM_SysCtlClockGet()/100-1));
 
-                f_close(&fil); // close the open file
+//                f_close(&fil); // close the open file
                 file_counter = file_counter + 1; // increment the counter
                 i = 0;
                 sprintf(filename, "%s%d.txt", def_filename, file_counter); // generate new filename
 
-                rc = f_open(&fil, filename, FA_CREATE_ALWAYS | FA_WRITE); // open the new file
-                if(rc != FR_OK)
-                {
-#ifdef DEBUG
-                    UARTprintf("Cannot open file for writing data. Bye!\n");
-#endif
-                    return 0;
-                }
-                else
-                {
-#ifdef DEBUG
-                    UARTprintf("Now writing to file: %s\n", filename);
-#endif
-                }
+//                rc = f_open(&fil, filename, FA_CREATE_ALWAYS | FA_WRITE); // open the new file
+//                if(rc != FR_OK)
+//                {
+//#ifdef DEBUG
+//                    UARTprintf("Cannot open file for writing data. Bye!\n");
+//#endif
+//                    return 0;
+//                }
+//                else
+//                {
+//#ifdef DEBUG
+//                    UARTprintf("Now writing to file: %s\n", filename);
+//#endif
+//                }
             }else{
                 //do nothing
             }
@@ -1693,7 +1726,7 @@ int main(void)
                 UARTprintf("Now writing Buffer B\n");
 #endif
                 // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, 0);
-                rc = f_write(&fil, bufferB, buffer_size*2, &bw); // write to SD Card
+//                rc = f_write(&fil, bufferB, buffer_size*2, &bw); // write to SD Card
                 if(rc != FR_OK)
                 {
 #ifdef DEBUG
@@ -1720,7 +1753,7 @@ int main(void)
                 UARTprintf("Now writing Buffer A\n");
 #endif
                 // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, 0);
-                rc = f_write(&fil, bufferA, buffer_size*2, &bw); // write to SD Card
+//                rc = f_write(&fil, bufferA, buffer_size*2, &bw); // write to SD Card
                 if(rc != FR_OK)
                 {
 #ifdef DEBUG
@@ -1749,11 +1782,38 @@ int main(void)
             }else{
                 dummy += 1;
             }//nonsense, added to make the code work
+
+//            if (ICM_write_ready)
+//            {
+//                ICM_write_ready = false;
+//                rc = f_write(&fil_icm, ICM_bufferA, uint16_len(ICM_bufferA), &bw); // write to SD Card
+//                if(rc != FR_OK)
+//                {
+//#ifdef DEBUG
+//                    UARTprintf("ICM Cannot write to file! Bye!\n");
+//#endif
+//                   return 0;
+//                }
+//                else
+//                {
+                   // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
+//#ifdef DEBUG
+//                    UARTprintf("Wrote ICM_bufferA\n");
+//#endif
+//                }
+//            }
+
         }
         else {
             ROM_SysCtlSleep();
         }
     }
 
+
     UARTprintf("Done!\n");
+    free(bufferA);
+    free(bufferB);
+    free(ICM_bufferA);
+//    f_close(&fil);
+    f_close(&fil_icm);
 }
