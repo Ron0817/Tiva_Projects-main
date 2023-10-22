@@ -592,14 +592,7 @@ void Timer1IntHandler(void) {
             break;
         }
 }
-//// Handler for timer2
-//void Timer2IntHandler(void) {
-//    ROM_TimerIntClear(TIMER2_BASE, TIMER_TIMA_TIMEOUT);
-//    //UARTprintf("Inside Timer 1\n\n\n\n\n\n");
-//    //ROM_TimerLoadSet(TIMER1_BASE, TIMER_A, (ROM_SysCtlClockGet()-1));
-//    UARTprintf("In timer 2\n\n\n\n\n");
-//    ROM_TimerLoadSet(TIMER2_BASE, TIMER_A, (ROM_SysCtlClockGet()/1000000)*stim_off_time[0]-1);
-//}
+
 // Handler for timer2
 void Timer2IntHandler(void) {
     // SW interrupt to stop the program
@@ -866,21 +859,13 @@ void Timer5IntHandler(void)
                    gyro_sign.y, (uint16_t) gyro_axises.y, gyro_sign.z, (uint16_t) gyro_axises.z);
 
     // Store to buffer for storing to the SD card
-//    ICM_bufferA[count++] = (uint16_t) accel_axises.x + 1;
-//    ICM_bufferA[count++] = (uint16_t) accel_axises.y + 1;
-//    ICM_bufferA[count++] = (uint16_t) accel_axises.z + 1;
-//    ICM_bufferA[count++] = (uint16_t) gyro_axises.x + 1;
-//    ICM_bufferA[count++] = (uint16_t) gyro_axises.y + 1;
-//    ICM_bufferA[count++] = (uint16_t) gyro_axises.z + 1;
-    ICM_bufferA[count++] = (uint16_t) 1;
-    ICM_bufferA[count++] = (uint16_t) 2;
-    ICM_bufferA[count++] = (uint16_t) 3;
-    ICM_bufferA[count++] = (uint16_t) 4;
-    ICM_bufferA[count++] = (uint16_t) 5;
-    ICM_bufferA[count++] = (uint16_t) 6;
-//    ICM_bufferA[count++] = count;
-
-    if(count == 6 )
+    ICM_bufferA[count++] = (uint16_t) accel_axises.x + 1;
+    ICM_bufferA[count++] = (uint16_t) accel_axises.y + 1;
+    ICM_bufferA[count++] = (uint16_t) accel_axises.z + 1;
+    ICM_bufferA[count++] = (uint16_t) gyro_axises.x + 1;
+    ICM_bufferA[count++] = (uint16_t) gyro_axises.y + 1;
+    ICM_bufferA[count++] = (uint16_t) gyro_axises.z + 1;
+    if(count == 6 * 10)
     {
         count = 0;
         rc = f_write(&fil_icm, ICM_bufferA, uint16_len(ICM_bufferA) * 2, &bw); // write to SD Card
@@ -898,13 +883,14 @@ void Timer5IntHandler(void)
             UARTprintf("Wrote ICM_bufferA for %d words\n", uint16_len(ICM_bufferA));
 #endif
         }
-    }
-    int len = uint16_len(ICM_bufferA);
-    UARTprintf("NOW Count: %d ICM_bufferA size: %d\n ", count, len);
-    int i = 0;
-    for (i = 0; i < len; i++)
-    {
-        UARTprintf("%d\t",ICM_bufferA[i]);
+
+        int len = uint16_len(ICM_bufferA);
+        UARTprintf("NOW Count: %d ICM_bufferA size: %d\n ", count, len);
+        int i = 0;
+        for (i = 0; i < len; i++)
+        {
+            UARTprintf("%d\t",ICM_bufferA[i]);
+        }
     }
 
 
