@@ -10,8 +10,12 @@ def convert_hex_to_decimal(input_file, output_file, offset):
     # Convert each hexadecimal number to decimal
     decimal_numbers = [int(hex_num, 16) for hex_num in hex_numbers]
 
-    # Right shift uint16_t hex two bits to make alignment
-    decimal_numbers_aligned = [ (num >> 8) - offset for num in decimal_numbers]
+    # Swap uint16_t hex two LSBs and two MSBs to make alignment
+    # decimal_numbers_aligned = [( ((num & 0x0011) << 8 ) | (num >> 8) ) for num in decimal_numbers ]
+    decimal_numbers_aligned = []
+    for num in decimal_numbers:
+        decimal_numbers_aligned.append( (num & 0xff) << 8 | (num >> 8) )
+        # print(num, (num & 0xff), (num & 0x0011) << 8, (num >> 8))
 
     # Open the output file
     i = 1

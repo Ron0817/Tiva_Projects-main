@@ -42,7 +42,8 @@
 #define LED_G GPIO_PIN_6 // red LED
 #define BUFFER_A 0
 #define BUFFER_B 1
-#define ICM_SAMPLING_FREQUENCY (1)
+//TODO:Read from confighd.txt
+#define ICM_SAMPLING_FREQUENCY (200)
 
 #define DEBUG 1;
 // the error routine that is called if the driver library encounters an error
@@ -55,6 +56,7 @@ __error__(char *pcFilename, uint32_t ui32Line)
 
 
 /* ------------------------------------          Global Variables        ---------------------------------- */
+//TODO: Categorize global vars
 // buffers for Headstage data
 uint16_t *bufferA;
 uint16_t *bufferB;
@@ -78,6 +80,9 @@ uint32_t channel[32];
 
 uint16_t count;
 uint16_t dummy;
+
+// ICM Sampling Freq
+uint32_t ICM_sampling_frequency;
 
 // gyro and accel axises
 axises gyro_axises;
@@ -837,10 +842,9 @@ void Timer4IntHandler(void) {
 // Timer5 Handler for storing ICM gyro and accel readings to buffer
 void Timer5IntHandler(void)
 {
-//    static char* ret_val;
-
     // Buffer count
     static int count = 0;
+    int len;
 
     // Clear the timer interrupt. Recommended to do so earilest as possible.
     ROM_TimerIntClear(TIMER5_BASE, TIMER_TIMA_TIMEOUT);
@@ -855,9 +859,9 @@ void Timer5IntHandler(void)
     icm20948_gyro_read_dps(&gyro_axises);
     icm20948_accel_read_g(&accel_axises);
 
-    //TODO: WRite UARTprintf to a function. Convert 2's comp in Python script not here.
-    UARTprintfICM(accel_axises, gyro_axises);
+//    UARTprintfICM(accel_axises, gyro_axises);
 
+    //TODO: Convert 2's comp and minus offset in Python script
     // Store to buffer for storing to the SD card
     ICM_bufferA[count++] = (uint16_t) accel_axises.x + 1;
     ICM_bufferA[count++] = (uint16_t) accel_axises.y + 1;
@@ -865,10 +869,13 @@ void Timer5IntHandler(void)
     ICM_bufferA[count++] = (uint16_t) gyro_axises.x + 1;
     ICM_bufferA[count++] = (uint16_t) gyro_axises.y + 1;
     ICM_bufferA[count++] = (uint16_t) gyro_axises.z + 1;
-    if(count == 6 * 10)
+
+    // Store the buffer every 1 sec
+    if(count == 6 * ICM_sampling_frequency)
     {
+        len = uint16_len(ICM_bufferA);
         count = 0;
-        rc = f_write(&fil_icm, ICM_bufferA, uint16_len(ICM_bufferA) * 2, &bw); // write to SD Card
+        rc = f_write(&fil_icm, ICM_bufferA, len * 2, &bw);
         if(rc != FR_OK)
         {
 #ifdef DEBUG
@@ -880,11 +887,10 @@ void Timer5IntHandler(void)
         {
            // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
 #ifdef DEBUG
-            UARTprintf("Wrote ICM_bufferA for %d words\n", uint16_len(ICM_bufferA));
+            UARTprintf("Wrote ICM_bufferA for %d data\n", len);
 #endif
         }
 
-        int len = uint16_len(ICM_bufferA);
         UARTprintf("NOW Count: %d ICM_bufferA size: %d\n ", count, len);
         int i = 0;
         for (i = 0; i < len; i++)
@@ -903,7 +909,7 @@ int main(void)
     uint32_t ret;
 
     // ICM sampling frequency
-    uint32_t ICM_sampling_frequency = ICM_SAMPLING_FREQUENCY;
+    ICM_sampling_frequency = ICM_SAMPLING_FREQUENCY;
 
     ICM_write_ready = true;
 
@@ -1359,7 +1365,7 @@ int main(void)
     bufferB = (uint16_t *)malloc(buffer_size*sizeof(uint16_t));
 
     // TODO: Read ICM_buffer_size from confighd.txt
-    ICM_buffer_size = buffer_size;
+    ICM_buffer_size = 1024;
     ICM_bufferA = (uint16_t *)calloc(ICM_buffer_size, sizeof(uint16_t));
 
     // initial config
