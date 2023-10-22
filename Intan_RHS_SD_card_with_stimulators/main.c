@@ -83,10 +83,6 @@ uint16_t dummy;
 axises gyro_axises;
 axises accel_axises;
 
-// For UARTprint
-axises_str gyro_axises_str;
-axises_str accel_axises_str;
-
 // Workaround for sprintf() to UARTprint 2's complement number
 struct axises_sign{
     char x[2];
@@ -234,6 +230,34 @@ uint32_t my_read_register(uint32_t address)
 //    sprintf(filename, "%s%d", "%s", DataRx_check[0]);
 //    UARTprintf(filename);
 //    UARTprintf("\n");
+}
+
+UARTprintfICM(axises accel_axises, axises gyro_axises)
+{
+    static struct axises_sign gyro_sign;
+    static struct axises_sign accel_sign;
+
+    // Interesting findings that the following sprintf() doesn't work in this ISR.
+    // Reasons might be that it hangs the ISR and takes too long time.
+    (uint16_t) accel_axises.x < 0x1fff ? strcpy(accel_sign.x, "+") : strcpy(accel_sign.x, "-");
+    (uint16_t) accel_axises.y < 0x1fff ? strcpy(accel_sign.y, "+") : strcpy(accel_sign.y, "-");
+    (uint16_t) accel_axises.z < 0x1fff ? strcpy(accel_sign.z, "+") : strcpy(accel_sign.z, "-");
+    accel_axises.x = (uint16_t) accel_axises.x < 0x1fff ? (uint16_t) accel_axises.x : 0xffff - (uint16_t) accel_axises.x;
+    accel_axises.y = (uint16_t) accel_axises.y < 0x1fff ? (uint16_t) accel_axises.y : 0xffff - (uint16_t) accel_axises.y;
+    accel_axises.z = (uint16_t) accel_axises.z < 0x1fff ? (uint16_t) accel_axises.z : 0xffff - (uint16_t) accel_axises.z;
+
+    (uint16_t) gyro_axises.x < 0x1fff ? strcpy(gyro_sign.x, "+") : strcpy(gyro_sign.x, "-");
+    (uint16_t) gyro_axises.y < 0x1fff ? strcpy(gyro_sign.y, "+") : strcpy(gyro_sign.y, "-");
+    (uint16_t) gyro_axises.z < 0x1fff ? strcpy(gyro_sign.z, "+") : strcpy(gyro_sign.z, "-");
+    gyro_axises.x = (uint16_t) gyro_axises.x < 0x1fff ? (uint16_t) gyro_axises.x : 0xffff - (uint16_t) gyro_axises.x;
+    gyro_axises.y = (uint16_t) gyro_axises.y < 0x1fff ? (uint16_t) gyro_axises.y : 0xffff - (uint16_t) gyro_axises.y;
+    gyro_axises.z = (uint16_t) gyro_axises.z < 0x1fff ? (uint16_t) gyro_axises.z : 0xffff - (uint16_t) gyro_axises.z;
+
+    UARTprintf("Accel axises (x, y, z) = (%s%d, %s%d, %s%d) ", accel_sign.x, (uint16_t) accel_axises.x,
+                   accel_sign.y, (uint16_t) accel_axises.y, accel_sign.y, (uint16_t) accel_axises.z);
+    UARTprintf("Gyro axises (x, y, z) = (%s%d, %s%d, %s%d) \n", gyro_sign.x, (uint16_t) gyro_axises.x,
+                   gyro_sign.y, (uint16_t) gyro_axises.y, gyro_sign.z, (uint16_t) gyro_axises.z);
+
 }
 
 /* ------------------------------------          Interrupt Handlers        ---------------------------------- */
@@ -814,9 +838,6 @@ void Timer4IntHandler(void) {
 void Timer5IntHandler(void)
 {
 //    static char* ret_val;
-    // Workaround for sprintf() to UARTprint 2's complement number
-    static struct axises_sign gyro_sign;
-    static struct axises_sign accel_sign;
 
     // Buffer count
     static int count = 0;
@@ -834,29 +855,8 @@ void Timer5IntHandler(void)
     icm20948_gyro_read_dps(&gyro_axises);
     icm20948_accel_read_g(&accel_axises);
 
-    // Interesting findings that the following sprintf() doesn't work in this ISR.
-    // Reasons might be that it hangs the ISR and takes too long time.
-    // A workaround was made to hardcode the sign of gyro and accel readings
-    (uint16_t) accel_axises.x < 0x1fff ? strcpy(accel_sign.x, "+") : strcpy(accel_sign.x, "-");
-    (uint16_t) accel_axises.y < 0x1fff ? strcpy(accel_sign.y, "+") : strcpy(accel_sign.y, "-");
-    (uint16_t) accel_axises.z < 0x1fff ? strcpy(accel_sign.z, "+") : strcpy(accel_sign.z, "-");
-    accel_axises.x = (uint16_t) accel_axises.x < 0x1fff ? (uint16_t) accel_axises.x : 0xffff - (uint16_t) accel_axises.x;
-    accel_axises.y = (uint16_t) accel_axises.y < 0x1fff ? (uint16_t) accel_axises.y : 0xffff - (uint16_t) accel_axises.y;
-    accel_axises.z = (uint16_t) accel_axises.z < 0x1fff ? (uint16_t) accel_axises.z : 0xffff - (uint16_t) accel_axises.z;
-
-    (uint16_t) gyro_axises.x < 0x1fff ? strcpy(gyro_sign.x, "+") : strcpy(gyro_sign.x, "-");
-    (uint16_t) gyro_axises.y < 0x1fff ? strcpy(gyro_sign.y, "+") : strcpy(gyro_sign.y, "-");
-    (uint16_t) gyro_axises.z < 0x1fff ? strcpy(gyro_sign.z, "+") : strcpy(gyro_sign.z, "-");
-    gyro_axises.x = (uint16_t) gyro_axises.x < 0x1fff ? (uint16_t) gyro_axises.x : 0xffff - (uint16_t) gyro_axises.x;
-    gyro_axises.y = (uint16_t) gyro_axises.y < 0x1fff ? (uint16_t) gyro_axises.y : 0xffff - (uint16_t) gyro_axises.y;
-    gyro_axises.z = (uint16_t) gyro_axises.z < 0x1fff ? (uint16_t) gyro_axises.z : 0xffff - (uint16_t) gyro_axises.z;
-
-//    sample_nums ++;
-    // Print
-    UARTprintf("Accel axises (x, y, z) = (%s%d, %s%d, %s%d) ", accel_sign.x, (uint16_t) accel_axises.x,
-                   accel_sign.y, (uint16_t) accel_axises.y, accel_sign.y, (uint16_t) accel_axises.z);
-    UARTprintf("Gyro axises (x, y, z) = (%s%d, %s%d, %s%d) \n", gyro_sign.x, (uint16_t) gyro_axises.x,
-                   gyro_sign.y, (uint16_t) gyro_axises.y, gyro_sign.z, (uint16_t) gyro_axises.z);
+    //TODO: WRite UARTprintf to a function. Convert 2's comp in Python script not here.
+    UARTprintfICM(accel_axises, gyro_axises);
 
     // Store to buffer for storing to the SD card
     ICM_bufferA[count++] = (uint16_t) accel_axises.x + 1;
