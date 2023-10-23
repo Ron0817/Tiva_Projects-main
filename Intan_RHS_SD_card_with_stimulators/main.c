@@ -884,11 +884,6 @@ void Timer5IntHandler(void)
 #endif
            return 0;
         }
-<<<<<<< HEAD
-#test
-#test2
-=======
->>>>>>> parent of fdc4c26 (Update main.c)
         else
         {
            // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
