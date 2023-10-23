@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-//#include <pthread.h>
 #include "inc/hw_memmap.h"
 #include "inc/hw_ints.h"
 #include "inc/hw_ssi.h"
@@ -43,7 +42,7 @@
 #define BUFFER_A 0
 #define BUFFER_B 1
 //TODO:Read from confighd.txt
-#define ICM_SAMPLING_FREQUENCY (200)
+#define ICM_SAMPLING_FREQUENCY (10)
 
 #define DEBUG 1;
 // the error routine that is called if the driver library encounters an error
@@ -63,6 +62,7 @@ uint16_t *bufferB;
 uint32_t buffer_size;
 
 // buffers for ICM data
+uint16_t *ICM_bufferA;
 uint16_t *ICM_bufferA;
 uint32_t ICM_buffer_size;
 
@@ -845,6 +845,7 @@ void Timer5IntHandler(void)
     // Buffer count
     static int count = 0;
     int len;
+    static int sample_num = 0;
 
     // Clear the timer interrupt. Recommended to do so earilest as possible.
     ROM_TimerIntClear(TIMER5_BASE, TIMER_TIMA_TIMEOUT);
@@ -869,7 +870,7 @@ void Timer5IntHandler(void)
     ICM_bufferA[count++] = (uint16_t) gyro_axises.x + 1;
     ICM_bufferA[count++] = (uint16_t) gyro_axises.y + 1;
     ICM_bufferA[count++] = (uint16_t) gyro_axises.z + 1;
-
+    sample_num++;
     // Store the buffer every 1 sec
     if(count == 6 * ICM_sampling_frequency)
     {
@@ -887,16 +888,16 @@ void Timer5IntHandler(void)
         {
            // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
 #ifdef DEBUG
-            UARTprintf("Wrote ICM_bufferA for %d data\n", len);
+            UARTprintf("Sample No.%d wrote %d data from ICM_bufferA to SD card\n", sample_num, len);
 #endif
         }
 
-        UARTprintf("NOW Count: %d ICM_bufferA size: %d\n ", count, len);
-        int i = 0;
-        for (i = 0; i < len; i++)
-        {
-            UARTprintf("%d\t",ICM_bufferA[i]);
-        }
+//        UARTprintf("NOW Count: %d ICM_bufferA size: %d\n ", count, len);
+//        int i = 0;
+//        for (i = 0; i < len; i++)
+//        {
+//            UARTprintf("%d\t",ICM_bufferA[i]);
+//        }
     }
 
 
@@ -1695,19 +1696,19 @@ int main(void)
                 sprintf(filename, "%s%d.txt", def_filename, file_counter); // generate new filename
 
 //                rc = f_open(&fil, filename, FA_CREATE_ALWAYS | FA_WRITE); // open the new file
-//                if(rc != FR_OK)
-//                {
-//#ifdef DEBUG
-//                    UARTprintf("Cannot open file for writing data. Bye!\n");
-//#endif
-//                    return 0;
-//                }
-//                else
-//                {
-//#ifdef DEBUG
-//                    UARTprintf("Now writing to file: %s\n", filename);
-//#endif
-//                }
+                if(rc != FR_OK)
+                {
+#ifdef DEBUG
+                    UARTprintf("Cannot open file for writing data. Bye!\n");
+#endif
+                    return 0;
+                }
+                else
+                {
+#ifdef DEBUG
+                    UARTprintf("Now writing to file: %s\n", filename);
+#endif
+                }
             }else{
                 //do nothing
             }
