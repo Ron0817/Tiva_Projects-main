@@ -44,7 +44,7 @@
 #define ICM_BUFFER_A 0
 #define ICM_BUFFER_B 1
 //TODO:Read from confighd.txt
-#define ICM_SAMPLING_FREQUENCY (200)
+#define ICM_SAMPLING_FREQUENCY (20)
 
 #define DEBUG 1;
 // the error routine that is called if the driver library encounters an error
@@ -861,7 +861,6 @@ void Timer5IntHandler(void)
     icm20948_accel_read_g(&accel_axises);
 
     UARTprintfICM(accel_axises, gyro_axises);
-//    UARTprintfICM(accel_axises, gyro_axises);
 
     //TODO: Convert 2's comp and minus offset in Python script
     // Store to buffer for storing to the SD card
@@ -919,7 +918,7 @@ void Timer5IntHandler(void)
                ICM_bufferB[count++] = (uint16_t) gyro_axises.z + 1;
                ICM_sample_num++;
            }
-           UARTprintf("Count Monitoring - > %d\n", count);
+//           UARTprintf("Count Monitoring - > %d\n", count);
 
 
            if(count >= ICM_buffer_size - 12) { // check if count equals buffer_size, or if the buffer is full
@@ -957,6 +956,7 @@ int main(void)
     ICM_sampling_frequency = ICM_SAMPLING_FREQUENCY;
     ICM_buffer_len = 0;
     ICM_sample_num = 0;
+    int ICM_file_len = 0;
 
     // buffer for read data from SD Card
     TCHAR read_buffer[32];
@@ -1702,18 +1702,19 @@ int main(void)
 //    }
 
     // Open file for ICM writing
-    rc = f_open(&fil_icm, strcat("ICM ", filename), FA_CREATE_ALWAYS | FA_WRITE);
+    char ICM_filename[] = "ICM.txt";
+    rc = f_open(&fil_icm, ICM_filename, FA_CREATE_ALWAYS );
     if(rc != FR_OK)
     {
     #ifdef DEBUG
-            UARTprintf("Cannot open file for writing ICM data: %s\n", strcat("ICM ", filename));
+            UARTprintf("Cannot FA_CREATE_ALWAYS  %s\n", ICM_filename);
     #endif
             return 0;
         }
         else
         {
     #ifdef DEBUG
-            UARTprintf("Now ICM writing to file: %s\n", strcat("ICM ", filename));
+            UARTprintf("Success: FA_CREATE_ALWAYS %s\n", ICM_filename);
     #endif
     }
     ROM_SysCtlDelay(ROM_SysCtlClockGet()/3);
@@ -1833,6 +1834,27 @@ int main(void)
         if(ICM_storage_on)
         {
             UARTprintf("ICM_Storage_on entered if in while loop\n");
+            rc = f_open(&fil_icm, ICM_filename, FA_OPEN_EXISTING | FA_WRITE);
+            if(rc != FR_OK)
+            {
+                    UARTprintf("Cannot FA_OPEN_EXISTING | FA_WRITE %s\n", ICM_filename);
+                    return 0;
+            }
+            else
+            {
+                    UARTprintf("Success: FA_OPEN_EXISTING | FA_WRITE %s\n", ICM_filename);
+            }
+            rc = f_lseek(&fil_icm, ICM_file_len);
+            ICM_file_len += ICM_buffer_len * 2;
+            if(rc != FR_OK)
+            {
+                    UARTprintf("Cannot f_lseek %s\n", ICM_filename);
+                    return 0;
+            }
+            else
+            {
+                    UARTprintf("Success: f_lseek ICM_file_len = %d\n", ICM_file_len);
+            }
 
 //             ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, 0);
            if(ICM_buffer_mode == ICM_BUFFER_A) { // if A is currently being used, transfer from B
@@ -1909,6 +1931,8 @@ int main(void)
            }else{
                dummy += 1;
            }//nonsense, added to make the code work
+
+           rc = f_close(&fil_icm);
         }
     }
 
