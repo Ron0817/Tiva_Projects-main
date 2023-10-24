@@ -44,7 +44,7 @@
 #define ICM_BUFFER_A 0
 #define ICM_BUFFER_B 1
 //TODO:Read from confighd.txt
-#define ICM_SAMPLING_FREQUENCY (20)
+#define ICM_SAMPLING_FREQUENCY (200)
 
 #define DEBUG 1;
 // the error routine that is called if the driver library encounters an error
@@ -860,7 +860,7 @@ void Timer5IntHandler(void)
     icm20948_gyro_read_dps(&gyro_axises);
     icm20948_accel_read_g(&accel_axises);
 
-    UARTprintfICM(accel_axises, gyro_axises);
+//    UARTprintfICM(accel_axises, gyro_axises);
 
     //TODO: Convert 2's comp and minus offset in Python script
     // Store to buffer for storing to the SD card
@@ -1686,20 +1686,20 @@ int main(void)
     /***********************************************************/
     /* Open first file to write */
     /***********************************************************/
-//    rc = f_open(&fil, filename, FA_CREATE_ALWAYS | FA_WRITE);
-//    if(rc != FR_OK)
-//    {
-//#ifdef DEBUG
-//        UARTprintf("Cannot open file for writing data. Bye!\n");
-//#endif
-//        return 0;
-//    }
-//    else
-//    {
-//#ifdef DEBUG
-//        UARTprintf("Now writing to file: %s\n", filename);
-//#endif
-//    }
+    rc = f_open(&fil, filename, FA_CREATE_ALWAYS | FA_WRITE);
+    if(rc != FR_OK)
+    {
+#ifdef DEBUG
+        UARTprintf("Cannot open file for writing data. Bye!\n");
+#endif
+        return 0;
+    }
+    else
+    {
+#ifdef DEBUG
+        UARTprintf("Now writing to file: %s\n", filename);
+#endif
+    }
 
     // Open file for ICM writing
     char ICM_filename[] = "ICM.txt";
@@ -1739,12 +1739,12 @@ int main(void)
             if(i == store_count) {
                 //ROM_TimerLoadSet(TIMER1_BASE, TIMER_A, (ROM_SysCtlClockGet()/100-1));
 
-//                f_close(&fil); // close the open file
+                f_close(&fil); // close the open file
                 file_counter = file_counter + 1; // increment the counter
                 i = 0;
                 sprintf(filename, "%s%d.txt", def_filename, file_counter); // generate new filename
 
-//                rc = f_open(&fil, filename, FA_CREATE_ALWAYS | FA_WRITE); // open the new file
+                rc = f_open(&fil, filename, FA_CREATE_ALWAYS | FA_WRITE); // open the new file
                 if(rc != FR_OK)
                 {
 #ifdef DEBUG
@@ -1768,7 +1768,7 @@ int main(void)
                 UARTprintf("Now writing Buffer B\n");
 #endif
                 // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, 0);
-//                rc = f_write(&fil, bufferB, buffer_size*2, &bw); // write to SD Card
+                rc = f_write(&fil, bufferB, buffer_size*2, &bw); // write to SD Card
                 if(rc != FR_OK)
                 {
 #ifdef DEBUG
@@ -1795,7 +1795,7 @@ int main(void)
                 UARTprintf("Now writing Buffer A\n");
 #endif
                 // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, 0);
-//                rc = f_write(&fil, bufferA, buffer_size*2, &bw); // write to SD Card
+                rc = f_write(&fil, bufferA, buffer_size*2, &bw); // write to SD Card
                 if(rc != FR_OK)
                 {
 #ifdef DEBUG
