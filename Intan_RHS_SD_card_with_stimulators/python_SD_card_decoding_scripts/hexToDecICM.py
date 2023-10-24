@@ -11,11 +11,14 @@ def convert_hex_to_decimal(input_file, output_file, offset):
     decimal_numbers = [int(hex_num, 16) for hex_num in hex_numbers]
 
     # Swap uint16_t hex two LSBs and two MSBs to make alignment
-    # decimal_numbers_aligned = [( ((num & 0x0011) << 8 ) | (num >> 8) ) for num in decimal_numbers ]
     decimal_numbers_aligned = []
     for num in decimal_numbers:
-        decimal_numbers_aligned.append( (num & 0xff) << 8 | (num >> 8) )
-        # print(num, (num & 0xff), (num & 0x0011) << 8, (num >> 8))
+        # Negative num
+        if ((num & 0xff) << 8 | (num >> 8) - offset) > 0x1fff:
+            decimal_numbers_aligned.append(((num & 0xff) << 8 | (num >> 8) - offset) - 0xffff)
+        # Positive num
+        else:
+            decimal_numbers_aligned.append( (num & 0xff) << 8 | (num >> 8) - offset)
 
     # Open the output file
     i = 1

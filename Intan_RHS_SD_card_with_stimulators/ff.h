@@ -289,6 +289,8 @@ int ff_del_syncobj (_SYNC_t sobj);				/* Delete a sync object */
 #define	FA_CREATE_NEW		0x04
 #define	FA_CREATE_ALWAYS	0x08
 #define	FA_OPEN_ALWAYS		0x10
+#define FA_OPEN_APPEND      0x30
+
 #define FA__WRITTEN			0x20
 #define FA__DIRTY			0x40
 #endif

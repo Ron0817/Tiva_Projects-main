@@ -44,7 +44,7 @@
 #define ICM_BUFFER_A 0
 #define ICM_BUFFER_B 1
 //TODO:Read from confighd.txt
-#define ICM_SAMPLING_FREQUENCY (20)
+#define ICM_SAMPLING_FREQUENCY (10)
 
 #define DEBUG 1;
 // the error routine that is called if the driver library encounters an error
@@ -85,9 +85,11 @@ volatile bool ICM_bufferA_empty;
 volatile bool ICM_bufferB_empty;
 volatile bool ICM_buffer_mode;
 volatile bool ICM_storage_on;
+int ICM_buffer_len;
 
 // ICM Sampling Freq
 uint32_t ICM_sampling_frequency;
+int ICM_sample_num;
 
 // ICM gyro and accel axises
 axises gyro_axises;
@@ -858,7 +860,7 @@ void Timer5IntHandler(void)
     icm20948_gyro_read_dps(&gyro_axises);
     icm20948_accel_read_g(&accel_axises);
 
-//    UARTprintfICM(accel_axises, gyro_axises);
+    UARTprintfICM(accel_axises, gyro_axises);
 
     //TODO: Convert 2's comp and minus offset in Python script
     // Store to buffer for storing to the SD card
@@ -905,6 +907,8 @@ void Timer5IntHandler(void)
                ICM_bufferA[count++] = (uint16_t) gyro_axises.x + 1;
                ICM_bufferA[count++] = (uint16_t) gyro_axises.y + 1;
                ICM_bufferA[count++] = (uint16_t) gyro_axises.z + 1;
+               ICM_buffer_len = count;
+               ICM_sample_num++;
            }
            else if(ICM_buffer_mode == ICM_BUFFER_B) {
                ICM_bufferB[count++] = (uint16_t) accel_axises.x + 1;
@@ -913,19 +917,22 @@ void Timer5IntHandler(void)
                ICM_bufferB[count++] = (uint16_t) gyro_axises.x + 1;
                ICM_bufferB[count++] = (uint16_t) gyro_axises.y + 1;
                ICM_bufferB[count++] = (uint16_t) gyro_axises.z + 1;
+               ICM_buffer_len = count;
+               ICM_sample_num++;
            }
-           UARTprintf("*******count -> %d\n", count);
 
-           if(count >= ICM_buffer_size) { // check if count equals buffer_size, or if the buffer is full
+           if(count >= ICM_buffer_size - 12) { // check if count equals buffer_size, or if the buffer is full
                count = 0;
                // switch buffer mode and enable storage on SD card
                if(ICM_buffer_mode == ICM_BUFFER_A)
                {
+                   UARTprintf("Now in mode ICM_BUFFER_A. Change to ICM_BUFFER_B\n");
                    ICM_buffer_mode = ICM_BUFFER_B;
                    ICM_bufferA_empty = false;
                    ICM_storage_on = true;
                }
                else if(ICM_buffer_mode == ICM_BUFFER_B) {
+                   UARTprintf("Now in mode ICM_BUFFER_B. Change to ICM_BUFFER_A\n");
                    ICM_buffer_mode = ICM_BUFFER_A;
                    ICM_bufferB_empty = false;
                    ICM_storage_on = true;
@@ -933,25 +940,6 @@ void Timer5IntHandler(void)
            }
        }
 
-       // nonsense, added to make the code work
-       if(ICM_bufferA_empty || ICM_bufferB_empty) { // check if any buffer is empty or has space
-           if(ICM_buffer_mode == ICM_BUFFER_A) {
-               ICM_bufferA[count++] = (uint16_t) accel_axises.x + 1;
-               ICM_bufferA[count++] = (uint16_t) accel_axises.y + 1;
-               ICM_bufferA[count++] = (uint16_t) accel_axises.z + 1;
-               ICM_bufferA[count++] = (uint16_t) gyro_axises.x + 1;
-               ICM_bufferA[count++] = (uint16_t) gyro_axises.y + 1;
-               ICM_bufferA[count++] = (uint16_t) gyro_axises.z + 1;
-           }
-           else if(ICM_buffer_mode == ICM_BUFFER_B) {
-               ICM_bufferB[count++] = (uint16_t) accel_axises.x + 1;
-              ICM_bufferB[count++] = (uint16_t) accel_axises.y + 1;
-              ICM_bufferB[count++] = (uint16_t) accel_axises.z + 1;
-              ICM_bufferB[count++] = (uint16_t) gyro_axises.x + 1;
-              ICM_bufferB[count++] = (uint16_t) gyro_axises.y + 1;
-              ICM_bufferB[count++] = (uint16_t) gyro_axises.z + 1;
-           }
-       }
 
 
 }
@@ -965,6 +953,8 @@ int main(void)
 
     // ICM sampling frequency
     ICM_sampling_frequency = ICM_SAMPLING_FREQUENCY;
+    ICM_buffer_len = 0;
+    ICM_sample_num = 0;
 
     // buffer for read data from SD Card
     TCHAR read_buffer[32];
@@ -1460,10 +1450,12 @@ int main(void)
     UARTprintf("Store count in each file: %d\n", store_count);
 #endif
 
+    // ICM SPI init
     ICM_SPI_init();
 
+    // Headstage SPI init
     SPIInit();
-    ROM_SysCtlDelay(SysCtlClockGet()/10);
+    ROM_SysCtlDelay(SysCtlClockGet()/3);
 
 
     /***********************************************************/
@@ -1682,7 +1674,7 @@ int main(void)
     ret = ICM_SPI_Read(0x00);
     UARTprintf("ICM20948 is 0xea ? -> 0x%x\n", ret);
     icm20948_init();
-    ROM_SysCtlDelay(SysCtlClockGet());
+    ROM_SysCtlDelay(SysCtlClockGet()/3);
     UARTprintf("Init check done. Start Reading ...\n");
 
 
@@ -1719,7 +1711,7 @@ int main(void)
             UARTprintf("Now ICM writing to file: %s\n", strcat("ICM ", filename));
     #endif
     }
-    ROM_SysCtlDelay(ROM_SysCtlClockGet());
+    ROM_SysCtlDelay(ROM_SysCtlClockGet()/3);
 
 
     // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_R, LED_R); // turn off red LED
@@ -1840,15 +1832,17 @@ int main(void)
 //             ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, 0);
            if(ICM_buffer_mode == ICM_BUFFER_A) { // if A is currently being used, transfer from B
 #ifdef DEBUG
-               UARTprintf("Now writing ICM_Buffer B\n");
+               UARTprintf("Now writing ICM_Buffer B to SD card\n");
 #endif
-               // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, 0);
-                rc = f_write(&fil_icm, ICM_bufferB, ICM_buffer_size*2, &bw); // write to SD Card
-                int i = 0;
-               for (i = 0; i < ICM_buffer_size; i++)
-               {
-                   UARTprintf("%d\t",ICM_bufferB[i]);
-               }
+
+//               ICM_buffer_len = uint16_len(ICM_bufferB);
+//               ICM_buffer_len = ICM_buffer_size * 2;
+                rc = f_write(&fil_icm, ICM_bufferB, ICM_buffer_len * 2, &bw); // write to SD Card
+//                int i = 0;
+//               for (i = 0; i < ICM_buffer_len; i++)
+//               {
+//                   UARTprintf("%d\t",ICM_bufferB[i]);
+//               }
                if(rc != FR_OK)
                {
 #ifdef DEBUG
@@ -1860,7 +1854,7 @@ int main(void)
                {
                    // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
 #ifdef DEBUG
-                   UARTprintf("Wrote ICM_buffer B\n");
+                   UARTprintf("Wrote %d ICM data from ICM_buffer B to SD card\n", ICM_buffer_len);
 #endif
                }
 #ifdef DEBUG
@@ -1871,15 +1865,17 @@ int main(void)
            }
            else if(ICM_buffer_mode == ICM_BUFFER_B) { // if B is currently being used, transfer from A.
 #ifdef DEBUG
-               UARTprintf("Now writing ICM_Buffer A\n");
+               UARTprintf("Now writing ICM_Buffer A to SD card\n");
 #endif
-               // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, 0);
-                rc = f_write(&fil_icm, ICM_bufferA, ICM_buffer_size*2, &bw); // write to SD Card
-                int i = 0;
-               for (i = 0; i < ICM_buffer_size; i++)
-               {
-                   UARTprintf("%d\t",ICM_bufferA[i]);
-               }
+
+//               ICM_buffer_len = uint16_len(ICM_bufferA);
+//               ICM_buffer_len = ICM_buffer_size * 2;
+                rc = f_write(&fil_icm, ICM_bufferA, ICM_buffer_len * 2, &bw); // write to SD Card
+//                int i = 0;
+//               for (i = 0; i < ICM_buffer_len; i++)
+//               {
+//                   UARTprintf("%d\t",ICM_bufferA[i]);
+//               }
 
                if(rc != FR_OK)
                {
@@ -1892,7 +1888,7 @@ int main(void)
                {
                    // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
 #ifdef DEBUG
-                   UARTprintf("Wrote ICM_buffer A\n");
+                   UARTprintf("Wrote %d ICM data from ICM_buffer A to SD card\n", ICM_buffer_len);
 #endif
                }
 #ifdef DEBUG
@@ -1912,7 +1908,7 @@ int main(void)
     }
 
 
-    UARTprintf("Done!\n");
+    UARTprintf("Done! ICM_sample_num = %d\n", ICM_sample_num);
     free(bufferA);
     free(bufferB);
     free(ICM_bufferA);
