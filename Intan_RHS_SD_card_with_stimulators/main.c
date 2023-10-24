@@ -44,7 +44,7 @@
 #define ICM_BUFFER_A 0
 #define ICM_BUFFER_B 1
 //TODO:Read from confighd.txt
-#define ICM_SAMPLING_FREQUENCY (10)
+#define ICM_SAMPLING_FREQUENCY (200)
 
 #define DEBUG 1;
 // the error routine that is called if the driver library encounters an error
@@ -861,6 +861,7 @@ void Timer5IntHandler(void)
     icm20948_accel_read_g(&accel_axises);
 
     UARTprintfICM(accel_axises, gyro_axises);
+//    UARTprintfICM(accel_axises, gyro_axises);
 
     //TODO: Convert 2's comp and minus offset in Python script
     // Store to buffer for storing to the SD card
@@ -907,7 +908,6 @@ void Timer5IntHandler(void)
                ICM_bufferA[count++] = (uint16_t) gyro_axises.x + 1;
                ICM_bufferA[count++] = (uint16_t) gyro_axises.y + 1;
                ICM_bufferA[count++] = (uint16_t) gyro_axises.z + 1;
-               ICM_buffer_len = count;
                ICM_sample_num++;
            }
            else if(ICM_buffer_mode == ICM_BUFFER_B) {
@@ -917,11 +917,13 @@ void Timer5IntHandler(void)
                ICM_bufferB[count++] = (uint16_t) gyro_axises.x + 1;
                ICM_bufferB[count++] = (uint16_t) gyro_axises.y + 1;
                ICM_bufferB[count++] = (uint16_t) gyro_axises.z + 1;
-               ICM_buffer_len = count;
                ICM_sample_num++;
            }
+           UARTprintf("Count Monitoring - > %d\n", count);
+
 
            if(count >= ICM_buffer_size - 12) { // check if count equals buffer_size, or if the buffer is full
+               ICM_buffer_len = count;
                count = 0;
                // switch buffer mode and enable storage on SD card
                if(ICM_buffer_mode == ICM_BUFFER_A)
@@ -1633,6 +1635,7 @@ int main(void)
 //        {
 //        }
     //    UARTprintf("another delay\n");
+
     /***********************************************************/
     /* Enable global interrupt */
     /***********************************************************/
@@ -1644,7 +1647,7 @@ int main(void)
     timer2_init();
     timer3_init();
     timer4_init();
-    timer5_init(ICM_sampling_frequency);
+
     //turn on corresponding stimulators
     if(stim_on[0]){
         ROM_TimerEnable(TIMER1_BASE, TIMER_A);
@@ -1676,6 +1679,8 @@ int main(void)
     icm20948_init();
     ROM_SysCtlDelay(SysCtlClockGet()/3);
     UARTprintf("Init check done. Start Reading ...\n");
+
+    timer5_init(ICM_sampling_frequency);
 
 
     /***********************************************************/
