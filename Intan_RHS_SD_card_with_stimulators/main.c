@@ -862,8 +862,7 @@ void Timer5IntHandler(void)
 
 //    UARTprintfICM(accel_axises, gyro_axises);
 
-    //TODO: Convert 2's comp and minus offset in Python script
-    // Store to buffer for storing to the SD card
+    // could be sampling and storing together in timer5_int at lower freq
 //    ICM_bufferA[count++] = (uint16_t) accel_axises.x + 1;
 //    ICM_bufferA[count++] = (uint16_t) accel_axises.y + 1;
 //    ICM_bufferA[count++] = (uint16_t) accel_axises.z + 1;
@@ -918,9 +917,6 @@ void Timer5IntHandler(void)
                ICM_bufferB[count++] = (uint16_t) gyro_axises.z + 1;
                ICM_sample_num++;
            }
-//           UARTprintf("Count Monitoring - > %d\n", count);
-
-
            if(count >= ICM_buffer_size - 12) { // check if count equals buffer_size, or if the buffer is full
                ICM_buffer_len = count;
                count = 0;
@@ -1856,7 +1852,6 @@ int main(void)
                     UARTprintf("Success: f_lseek ICM_file_len = %d\n", ICM_file_len);
             }
 
-//             ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, 0);
            if(ICM_buffer_mode == ICM_BUFFER_A) { // if A is currently being used, transfer from B
 #ifdef DEBUG
                UARTprintf("Now writing ICM_Buffer B to SD card\n");
@@ -1879,7 +1874,6 @@ int main(void)
                }
                else
                {
-                   // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
 #ifdef DEBUG
                    UARTprintf("Wrote %d ICM data from ICM_buffer B to SD card\n", ICM_buffer_len);
 #endif
@@ -1913,7 +1907,6 @@ int main(void)
                }
                else
                {
-                   // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
 #ifdef DEBUG
                    UARTprintf("Wrote %d ICM data from ICM_buffer A to SD card\n", ICM_buffer_len);
 #endif
@@ -1924,7 +1917,6 @@ int main(void)
                ICM_bufferA_empty = true;
                ICM_storage_on = false;
            }
-           // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
 
            if(dummy == 1000){
                dummy = 0;
