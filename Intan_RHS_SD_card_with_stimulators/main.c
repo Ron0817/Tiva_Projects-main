@@ -39,8 +39,8 @@
 /* ------------------------------------          Macros        ---------------------------------- */
 #define LED_R GPIO_PIN_7 // red LED
 #define LED_G GPIO_PIN_6 // red LED
-#define BUFFER_A 0
-#define BUFFER_B 1
+#define RHS_BUFFER_A 0
+#define RHS_BUFFER_B 1
 #define ICM_BUFFER_A 0
 #define ICM_BUFFER_B 1
 //TODO:Read from confighd.txt
@@ -512,10 +512,10 @@ void Timer0IntHandler(void) {
     ROM_SSIDataGetNonBlocking(SSI0_BASE, &ADCValue[1]);
 
     if(RHS_bufferA_empty || RHS_bufferB_empty) { // check if any buffer is empty or has space
-        if(RHS_buffer_mode == BUFFER_A) {
+        if(RHS_buffer_mode == RHS_BUFFER_A) {
             RHS_bufferA[count] = ADCValue[0];
         }
-        else if(RHS_buffer_mode == BUFFER_B) {
+        else if(RHS_buffer_mode == RHS_BUFFER_B) {
             RHS_bufferB[count] = ADCValue[0];
         }
 
@@ -524,14 +524,14 @@ void Timer0IntHandler(void) {
             count = 0;
 
             // switch buffer mode and enable storage on SD card
-            if(RHS_buffer_mode == BUFFER_A)
+            if(RHS_buffer_mode == RHS_BUFFER_A)
             {
-                RHS_buffer_mode = BUFFER_B;
+                RHS_buffer_mode = RHS_BUFFER_B;
                 RHS_bufferA_empty = false;
                 RHS_storage_on = true;
             }
-            else if(RHS_buffer_mode == BUFFER_B) {
-                RHS_buffer_mode = BUFFER_A;
+            else if(RHS_buffer_mode == RHS_BUFFER_B) {
+                RHS_buffer_mode = RHS_BUFFER_A;
                 RHS_bufferB_empty = false;
                 RHS_storage_on = true;
             }
@@ -540,10 +540,10 @@ void Timer0IntHandler(void) {
 
     // nonsense, added to make the code work
     if(RHS_bufferA_empty || RHS_bufferB_empty) { // check if any buffer is empty or has space
-        if(RHS_buffer_mode == BUFFER_A) {
+        if(RHS_buffer_mode == RHS_BUFFER_A) {
             RHS_bufferA[count] = ADCValue[0];
         }
-        else if(RHS_buffer_mode == BUFFER_B) {
+        else if(RHS_buffer_mode == RHS_BUFFER_B) {
             RHS_bufferB[count] = ADCValue[0];
         }
     }
@@ -1409,7 +1409,7 @@ int main(void)
     ICM_bufferB_empty = true;   // buffer is empty
 
     // initial config
-    RHS_buffer_mode = BUFFER_A; // first start from buffer A
+    RHS_buffer_mode = RHS_BUFFER_A; // first start from buffer A
     RHS_storage_on = false; // currently write to SD card is disabled
     RHS_bufferA_empty = true; // buffer is empty
     RHS_bufferB_empty = true;   // buffer is empty
@@ -1759,7 +1759,7 @@ int main(void)
             }
 
             // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, 0);
-            if(RHS_buffer_mode == BUFFER_A) { // if A is currently being used, transfer from B
+            if(RHS_buffer_mode == RHS_BUFFER_A) { // if A is currently being used, transfer from B
 #ifdef DEBUG
                 UARTprintf("Now writing RHS_Buffer B\n");
 #endif
@@ -1768,7 +1768,7 @@ int main(void)
                 if(rc != FR_OK)
                 {
 #ifdef DEBUG
-                    UARTprintf("Cannot write to file! Bye!\n");
+                    UARTprintf("Cannot write to RHS_file! Bye!\n");
 #endif
                     return 0;
                 }
@@ -1786,7 +1786,7 @@ int main(void)
                 RHS_bufferB_empty = true;
                 RHS_storage_on = false;
             }
-            else if(RHS_buffer_mode == BUFFER_B) { // if B is currently being used, transfer from A.
+            else if(RHS_buffer_mode == RHS_BUFFER_B) { // if B is currently being used, transfer from A.
 #ifdef DEBUG
                 UARTprintf("Now writing RHS_Buffer A\n");
 #endif
@@ -1795,7 +1795,7 @@ int main(void)
                 if(rc != FR_OK)
                 {
 #ifdef DEBUG
-                    UARTprintf("Cannot write to file! Bye!\n");
+                    UARTprintf("Cannot write to RHS_file! Bye!\n");
 #endif
                     return 0;
                 }
