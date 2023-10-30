@@ -64,7 +64,7 @@ uint32_t buffer_size;
 volatile bool bufferA_empty;
 volatile bool bufferB_empty;
 volatile bool buffer_mode;
-volatile bool storage_on;
+volatile bool RHS_storage_on;
 uint16_t count;
 uint16_t dummy;
 
@@ -528,12 +528,12 @@ void Timer0IntHandler(void) {
             {
                 buffer_mode = BUFFER_B;
                 bufferA_empty = false;
-                storage_on = true;
+                RHS_storage_on = true;
             }
             else if(buffer_mode == BUFFER_B) {
                 buffer_mode = BUFFER_A;
                 bufferB_empty = false;
-                storage_on = true;
+                RHS_storage_on = true;
             }
         }
     }
@@ -1410,7 +1410,7 @@ int main(void)
 
     // initial config
     buffer_mode = BUFFER_A; // first start from buffer A
-    storage_on = false; // currently write to SD card is disabled
+    RHS_storage_on = false; // currently write to SD card is disabled
     bufferA_empty = true; // buffer is empty
     bufferB_empty = true;   // buffer is empty
 
@@ -1724,7 +1724,7 @@ int main(void)
 
     while(!stop){
         /* ------------------------------------         Headstage storage        ---------------------------------- */
-        if(storage_on) { // check if write to SD card is enabled
+        if(RHS_storage_on) { // check if write to SD card is enabled
             //ROM_TimerLoadSet(TIMER1_BASE, TIMER_A, (ROM_SysCtlClockGet()-1));
 
             // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, 0);
@@ -1784,7 +1784,7 @@ int main(void)
                 UARTprintf("i: %d\n", i);
 #endif
                 bufferB_empty = true;
-                storage_on = false;
+                RHS_storage_on = false;
             }
             else if(buffer_mode == BUFFER_B) { // if B is currently being used, transfer from A.
 #ifdef DEBUG
@@ -1811,7 +1811,7 @@ int main(void)
                 UARTprintf("i: %d\n", i);
 #endif
                 bufferA_empty = true;
-                storage_on = false;
+                RHS_storage_on = false;
             }
             // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
 
