@@ -58,12 +58,12 @@ __error__(char *pcFilename, uint32_t ui32Line)
 
 /* ------------------------------------          Global Variables        ---------------------------------- */
 // Buffers for Headstage data
-uint16_t *bufferA;
-uint16_t *bufferB;
-uint32_t buffer_size;
-volatile bool bufferA_empty;
-volatile bool bufferB_empty;
-volatile bool buffer_mode;
+uint16_t *RHS_bufferA;
+uint16_t *RHS_bufferB;
+uint32_t RHS_buffer_size;
+volatile bool RHS_bufferA_empty;
+volatile bool RHS_bufferB_empty;
+volatile bool RHS_buffer_mode;
 volatile bool RHS_storage_on;
 uint16_t count;
 uint16_t dummy;
@@ -511,40 +511,40 @@ void Timer0IntHandler(void) {
     ROM_SSIDataGetNonBlocking(SSI0_BASE, &ADCValue[0]); //high gain amplifier result
     ROM_SSIDataGetNonBlocking(SSI0_BASE, &ADCValue[1]);
 
-    if(bufferA_empty || bufferB_empty) { // check if any buffer is empty or has space
-        if(buffer_mode == BUFFER_A) {
-            bufferA[count] = ADCValue[0];
+    if(RHS_bufferA_empty || RHS_bufferB_empty) { // check if any buffer is empty or has space
+        if(RHS_buffer_mode == BUFFER_A) {
+            RHS_bufferA[count] = ADCValue[0];
         }
-        else if(buffer_mode == BUFFER_B) {
-            bufferB[count] = ADCValue[0];
+        else if(RHS_buffer_mode == BUFFER_B) {
+            RHS_bufferB[count] = ADCValue[0];
         }
 
         count = count + 1; // increment count for data in buffer
-        if(count == buffer_size) { // check if count equals buffer_size, or if the buffer is full
+        if(count == RHS_buffer_size) { // check if count equals buffer_size, or if the buffer is full
             count = 0;
 
             // switch buffer mode and enable storage on SD card
-            if(buffer_mode == BUFFER_A)
+            if(RHS_buffer_mode == BUFFER_A)
             {
-                buffer_mode = BUFFER_B;
-                bufferA_empty = false;
+                RHS_buffer_mode = BUFFER_B;
+                RHS_bufferA_empty = false;
                 RHS_storage_on = true;
             }
-            else if(buffer_mode == BUFFER_B) {
-                buffer_mode = BUFFER_A;
-                bufferB_empty = false;
+            else if(RHS_buffer_mode == BUFFER_B) {
+                RHS_buffer_mode = BUFFER_A;
+                RHS_bufferB_empty = false;
                 RHS_storage_on = true;
             }
         }
     }
 
     // nonsense, added to make the code work
-    if(bufferA_empty || bufferB_empty) { // check if any buffer is empty or has space
-        if(buffer_mode == BUFFER_A) {
-            bufferA[count] = ADCValue[0];
+    if(RHS_bufferA_empty || RHS_bufferB_empty) { // check if any buffer is empty or has space
+        if(RHS_buffer_mode == BUFFER_A) {
+            RHS_bufferA[count] = ADCValue[0];
         }
-        else if(buffer_mode == BUFFER_B) {
-            bufferB[count] = ADCValue[0];
+        else if(RHS_buffer_mode == BUFFER_B) {
+            RHS_bufferB[count] = ADCValue[0];
         }
     }
 }
@@ -1086,10 +1086,10 @@ int main(void)
 #ifdef DEBUG
                 UARTprintf("buffer_size:%d\n", read_value);
 #endif
-                buffer_size = read_value; // this value is number of bytes (8-bit)
-                buffer_size = buffer_size/2; // as we are using 16-bit data, we divide by two;
+                RHS_buffer_size = read_value; // this value is number of bytes (8-bit)
+                RHS_buffer_size = RHS_buffer_size/2; // as we are using 16-bit data, we divide by two;
 #ifdef DEBUG
-                UARTprintf("adjusted buffer_size:%d\n", buffer_size);
+                UARTprintf("adjusted RHS_buffer_size:%d\n", RHS_buffer_size);
 #endif
             }
             else if(strcmp(command, "file_seconds") == 0) {
@@ -1395,8 +1395,8 @@ int main(void)
     sprintf(filename, "%s%d.txt", def_filename, file_counter);
 
     // set up buffers
-    bufferA = (uint16_t *)malloc(buffer_size*sizeof(uint16_t));
-    bufferB = (uint16_t *)malloc(buffer_size*sizeof(uint16_t));
+    RHS_bufferA = (uint16_t *)malloc(RHS_buffer_size*sizeof(uint16_t));
+    RHS_bufferB = (uint16_t *)malloc(RHS_buffer_size*sizeof(uint16_t));
 
     // TODO: Read ICM_buffer_size from confighd.txt
     ICM_buffer_size = 1024;
@@ -1409,10 +1409,10 @@ int main(void)
     ICM_bufferB_empty = true;   // buffer is empty
 
     // initial config
-    buffer_mode = BUFFER_A; // first start from buffer A
+    RHS_buffer_mode = BUFFER_A; // first start from buffer A
     RHS_storage_on = false; // currently write to SD card is disabled
-    bufferA_empty = true; // buffer is empty
-    bufferB_empty = true;   // buffer is empty
+    RHS_bufferA_empty = true; // buffer is empty
+    RHS_bufferB_empty = true;   // buffer is empty
 
     // calculate the required total sampling frequency
     j = 0;
@@ -1443,7 +1443,7 @@ int main(void)
     // number of times complete buffer should be written to the SD card
     // to match the duration specified by file_minutes and
     // using 16-bit data (12-bit ADC resolution)
-    store_count = (file_seconds * sampling_frequency_total) / buffer_size;
+    store_count = (file_seconds * sampling_frequency_total) / RHS_buffer_size;
 #ifdef DEBUG
     UARTprintf("Store count in each file: %d\n", store_count);
 #endif
@@ -1759,12 +1759,12 @@ int main(void)
             }
 
             // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, 0);
-            if(buffer_mode == BUFFER_A) { // if A is currently being used, transfer from B
+            if(RHS_buffer_mode == BUFFER_A) { // if A is currently being used, transfer from B
 #ifdef DEBUG
-                UARTprintf("Now writing Buffer B\n");
+                UARTprintf("Now writing RHS_Buffer B\n");
 #endif
                 // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, 0);
-                rc = f_write(&fil, bufferB, buffer_size*2, &bw); // write to SD Card
+                rc = f_write(&fil, RHS_bufferB, RHS_buffer_size*2, &bw); // write to SD Card
                 if(rc != FR_OK)
                 {
 #ifdef DEBUG
@@ -1776,22 +1776,22 @@ int main(void)
                 {
                     // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
 #ifdef DEBUG
-                    UARTprintf("Wrote buffer B\n");
+                    UARTprintf("Wrote RHS_buffer B\n");
 #endif
                 }
                 i = i + 1;
 #ifdef DEBUG
                 UARTprintf("i: %d\n", i);
 #endif
-                bufferB_empty = true;
+                RHS_bufferB_empty = true;
                 RHS_storage_on = false;
             }
-            else if(buffer_mode == BUFFER_B) { // if B is currently being used, transfer from A.
+            else if(RHS_buffer_mode == BUFFER_B) { // if B is currently being used, transfer from A.
 #ifdef DEBUG
-                UARTprintf("Now writing Buffer A\n");
+                UARTprintf("Now writing RHS_Buffer A\n");
 #endif
                 // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, 0);
-                rc = f_write(&fil, bufferA, buffer_size*2, &bw); // write to SD Card
+                rc = f_write(&fil, RHS_bufferA, RHS_buffer_size*2, &bw); // write to SD Card
                 if(rc != FR_OK)
                 {
 #ifdef DEBUG
@@ -1803,14 +1803,14 @@ int main(void)
                 {
                     // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
 #ifdef DEBUG
-                    UARTprintf("Wrote buffer A\n");
+                    UARTprintf("Wrote RHS_buffer A\n");
 #endif
                 }
                 i = i + 1;
 #ifdef DEBUG
                 UARTprintf("i: %d\n", i);
 #endif
-                bufferA_empty = true;
+                RHS_bufferA_empty = true;
                 RHS_storage_on = false;
             }
             // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
@@ -1930,8 +1930,8 @@ int main(void)
 
 
     UARTprintf("Done! ICM_sample_num = %d\n", ICM_sample_num);
-    free(bufferA);
-    free(bufferB);
+    free(RHS_bufferA);
+    free(RHS_bufferB);
     free(ICM_bufferA);
     free(ICM_bufferB);
 //    f_close(&fil);
