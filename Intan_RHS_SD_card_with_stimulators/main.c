@@ -899,24 +899,42 @@ void Timer5IntHandler(void)
 ////        }
 //    }
     if(ICM_bufferA_empty || ICM_bufferB_empty) { // check if any buffer is empty or has space
+//           if(ICM_buffer_mode == ICM_BUFFER_A) {
+//               ICM_bufferA[count++] = (uint16_t) accel_axises.x + 1;
+//               ICM_bufferA[count++] = (uint16_t) accel_axises.y + 1;
+//               ICM_bufferA[count++] = (uint16_t) accel_axises.z + 1;
+//               ICM_bufferA[count++] = (uint16_t) gyro_axises.x + 1;
+//               ICM_bufferA[count++] = (uint16_t) gyro_axises.y + 1;
+//               ICM_bufferA[count++] = (uint16_t) gyro_axises.z + 1;
+//               ICM_sample_num++;
+//           }
+//           else if(ICM_buffer_mode == ICM_BUFFER_B) {
+//               ICM_bufferB[count++] = (uint16_t) accel_axises.x + 1;
+//               ICM_bufferB[count++] = (uint16_t) accel_axises.y + 1;
+//               ICM_bufferB[count++] = (uint16_t) accel_axises.z + 1;
+//               ICM_bufferB[count++] = (uint16_t) gyro_axises.x + 1;
+//               ICM_bufferB[count++] = (uint16_t) gyro_axises.y + 1;
+//               ICM_bufferB[count++] = (uint16_t) gyro_axises.z + 1;
+//               ICM_sample_num++;
+//           }
            if(ICM_buffer_mode == ICM_BUFFER_A) {
-               ICM_bufferA[count++] = (uint16_t) accel_axises.x + 1;
-               ICM_bufferA[count++] = (uint16_t) accel_axises.y + 1;
-               ICM_bufferA[count++] = (uint16_t) accel_axises.z + 1;
-               ICM_bufferA[count++] = (uint16_t) gyro_axises.x + 1;
-               ICM_bufferA[count++] = (uint16_t) gyro_axises.y + 1;
-               ICM_bufferA[count++] = (uint16_t) gyro_axises.z + 1;
-               ICM_sample_num++;
-           }
-           else if(ICM_buffer_mode == ICM_BUFFER_B) {
-               ICM_bufferB[count++] = (uint16_t) accel_axises.x + 1;
-               ICM_bufferB[count++] = (uint16_t) accel_axises.y + 1;
-               ICM_bufferB[count++] = (uint16_t) accel_axises.z + 1;
-               ICM_bufferB[count++] = (uint16_t) gyro_axises.x + 1;
-               ICM_bufferB[count++] = (uint16_t) gyro_axises.y + 1;
-               ICM_bufferB[count++] = (uint16_t) gyro_axises.z + 1;
-               ICM_sample_num++;
-           }
+                  ICM_bufferA[count++] = (uint16_t) 1;
+                  ICM_bufferA[count++] = (uint16_t) 2;
+                  ICM_bufferA[count++] = (uint16_t) 3;
+                  ICM_bufferA[count++] = (uint16_t) 4;
+                  ICM_bufferA[count++] = (uint16_t) 5;
+                  ICM_bufferA[count++] = (uint16_t) 6;
+                  ICM_sample_num++;
+              }
+              else if(ICM_buffer_mode == ICM_BUFFER_B) {
+                  ICM_bufferB[count++] = (uint16_t) 9;
+                  ICM_bufferB[count++] = (uint16_t) 9;
+                  ICM_bufferB[count++] = (uint16_t) 0;
+                  ICM_bufferB[count++] = (uint16_t) 5;
+                  ICM_bufferB[count++] = (uint16_t) 0;
+                  ICM_bufferB[count++] = (uint16_t) 6;
+                  ICM_sample_num++;
+              }
            if(count >= ICM_buffer_size - 12) { // check if count equals buffer_size, or if the buffer is full
                ICM_buffer_len = count;
                count = 0;
