@@ -1012,6 +1012,7 @@ int main(void)
 
     // counter for current file
     uint32_t file_counter = 0;
+    int RHS_file_len = 0;
 
     channel_number = 0;
     sti_channel_number = 0;
@@ -1700,7 +1701,7 @@ int main(void)
     /***********************************************************/
     /* Open first file to write */
     /***********************************************************/
-    rc = f_open(&fil, filename, FA_CREATE_ALWAYS | FA_WRITE);
+    rc = f_open(&fil, filename, FA_CREATE_ALWAYS );
     if(rc != FR_OK)
     {
 #ifdef DEBUG
@@ -1743,22 +1744,17 @@ int main(void)
     while(!stop){
         /* ------------------------------------         Headstage storage        ---------------------------------- */
         if(RHS_storage_on) { // check if write to SD card is enabled
-            //ROM_TimerLoadSet(TIMER1_BASE, TIMER_A, (ROM_SysCtlClockGet()-1));
-
-            // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, 0);
 
             // check if storecount for the file matches store-count.
             // if it matches, we must close this file and create a new file for writing to
             // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
             if(i == store_count) {
-                //ROM_TimerLoadSet(TIMER1_BASE, TIMER_A, (ROM_SysCtlClockGet()/100-1));
-
                 f_close(&fil); // close the open file
                 file_counter = file_counter + 1; // increment the counter
                 i = 0;
                 sprintf(filename, "%s%d.txt", def_filename, file_counter); // generate new filename
 
-                rc = f_open(&fil, filename, FA_CREATE_ALWAYS | FA_WRITE); // open the new file
+                rc = f_open(&fil, filename, FA_CREATE_ALWAYS ); // open the new file
                 if(rc != FR_OK)
                 {
 #ifdef DEBUG
@@ -1769,11 +1765,38 @@ int main(void)
                 else
                 {
 #ifdef DEBUG
-                    UARTprintf("Now writing to file: %s\n", filename);
+                    UARTprintf("Now writing to RHS_file: %s\n", filename);
+                    f_close(&fil); // close the open file
 #endif
                 }
             }else{
                 //do nothing
+            }
+
+            rc = f_open(&fil, filename, FA_OPEN_EXISTING | FA_WRITE);
+            if(rc != FR_OK)
+            {
+#ifdef DEBUG
+                UARTprintf("Cannot FA_OPEN_EXISTING | FA_WRITE RHS_file for writing data. Bye!\n");
+#endif
+                return 0;
+            }
+            else
+            {
+#ifdef DEBUG
+                UARTprintf("Now writing to RHS_file: %s\n", filename);
+#endif
+            }
+            rc = f_lseek(&fil, RHS_file_len);
+            RHS_file_len += RHS_buffer_size * 2;
+            if(rc != FR_OK)
+            {
+                    UARTprintf("Cannot f_lseek %s\n", filename);
+                    return 0;
+            }
+            else
+            {
+                    UARTprintf("Success: f_lseek RHS_file_len = %d\n", RHS_file_len);
             }
 
             // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, 0);
@@ -1838,6 +1861,7 @@ int main(void)
             }else{
                 dummy += 1;
             }//nonsense, added to make the code work
+            f_close(&fil); // close the open file
 
         }
         else {
@@ -1847,7 +1871,6 @@ int main(void)
         /* ------------------------------------          ICM Storage        ---------------------------------- */
         if(ICM_storage_on)
         {
-            UARTprintf("ICM_Storage_on entered if in while loop\n");
             rc = f_open(&fil_icm, ICM_filename, FA_OPEN_EXISTING | FA_WRITE);
             if(rc != FR_OK)
             {
