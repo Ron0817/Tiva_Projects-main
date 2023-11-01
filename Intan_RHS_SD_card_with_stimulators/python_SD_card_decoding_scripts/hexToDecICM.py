@@ -34,7 +34,7 @@ def convert_hex_to_decimal(input_file, output_file, offset):
 # Provide the input and output file paths
 input_file = 'input.txt'
 output_file = 'output.txt'
-offset = 1
+offset = 0
 
 # Call the function to convert hexadecimal to decimal
 convert_hex_to_decimal(input_file, output_file, offset)
