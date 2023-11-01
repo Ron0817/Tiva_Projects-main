@@ -1787,17 +1787,17 @@ int main(void)
                 UARTprintf("Now writing to RHS_file: %s\n", filename);
 #endif
             }
-            rc = f_lseek(&fil, RHS_file_len);
-            RHS_file_len += RHS_buffer_size * 2;
-            if(rc != FR_OK)
-            {
-                    UARTprintf("Cannot f_lseek %s\n", filename);
-                    return 0;
-            }
-            else
-            {
-                    UARTprintf("Success: f_lseek RHS_file_len = %d\n", RHS_file_len);
-            }
+//            rc = f_lseek(&fil, RHS_file_len);
+//            RHS_file_len += RHS_buffer_size * 2;
+//            if(rc != FR_OK)
+//            {
+//                    UARTprintf("Cannot f_lseek %s\n", filename);
+//                    return 0;
+//            }
+//            else
+//            {
+//                    UARTprintf("Success: f_lseek RHS_file_len = %d\n", RHS_file_len);
+//            }
 
             // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, 0);
             if(RHS_buffer_mode == RHS_BUFFER_A) { // if A is currently being used, transfer from B
@@ -1975,6 +1975,6 @@ int main(void)
     free(RHS_bufferB);
     free(ICM_bufferA);
     free(ICM_bufferB);
-//    f_close(&fil);
+    f_close(&fil);
     f_close(&fil_icm);
 }
