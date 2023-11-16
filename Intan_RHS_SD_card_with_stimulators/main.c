@@ -308,7 +308,7 @@ void uart_init(void)
 
 /* ------------------------------------          SPI         ---------------------------------- */
 // function to initialize SSI module
-void ICM_SPI_init(void)
+void SPI_init(void)
 {
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_SSI0);
 
@@ -878,63 +878,52 @@ void Timer5IntHandler(void)
 //        rc = f_write(&fil_icm, ICM_bufferA, len * 2, &bw);
 //        if(rc != FR_OK)
 //        {
-//#ifdef DEBUG
 //            UARTprintf("ICM Cannot write to file! Bye!\n");
-//#endif
 //           return 0;
 //        }
 //        else
 //        {
-//           // ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
-//#ifdef DEBUG
 //            UARTprintf("Sample No.%d wrote %d data from ICM_bufferA to SD card\n", sample_num, len);
-//#endif
 //        }
-//
-////        UARTprintf("NOW Count: %d ICM_bufferA size: %d\n ", count, len);
-////        int i = 0;
-////        for (i = 0; i < len; i++)
-////        {
-////            UARTprintf("%d\t",ICM_bufferA[i]);
-////        }
 //    }
+
     if(ICM_bufferA_empty || ICM_bufferB_empty) { // check if any buffer is empty or has space
-//           if(ICM_buffer_mode == ICM_BUFFER_A) {
-//               ICM_bufferA[count++] = (uint16_t) accel_axises.x + 1;
-//               ICM_bufferA[count++] = (uint16_t) accel_axises.y + 1;
-//               ICM_bufferA[count++] = (uint16_t) accel_axises.z + 1;
-//               ICM_bufferA[count++] = (uint16_t) gyro_axises.x + 1;
-//               ICM_bufferA[count++] = (uint16_t) gyro_axises.y + 1;
-//               ICM_bufferA[count++] = (uint16_t) gyro_axises.z + 1;
-//               ICM_sample_num++;
-//           }
-//           else if(ICM_buffer_mode == ICM_BUFFER_B) {
-//               ICM_bufferB[count++] = (uint16_t) accel_axises.x + 1;
-//               ICM_bufferB[count++] = (uint16_t) accel_axises.y + 1;
-//               ICM_bufferB[count++] = (uint16_t) accel_axises.z + 1;
-//               ICM_bufferB[count++] = (uint16_t) gyro_axises.x + 1;
-//               ICM_bufferB[count++] = (uint16_t) gyro_axises.y + 1;
-//               ICM_bufferB[count++] = (uint16_t) gyro_axises.z + 1;
-//               ICM_sample_num++;
-//           }
            if(ICM_buffer_mode == ICM_BUFFER_A) {
-                  ICM_bufferA[count++] = (uint16_t) 1;
-                  ICM_bufferA[count++] = (uint16_t) 2;
-                  ICM_bufferA[count++] = (uint16_t) 3;
-                  ICM_bufferA[count++] = (uint16_t) 4;
-                  ICM_bufferA[count++] = (uint16_t) 5;
-                  ICM_bufferA[count++] = (uint16_t) 6;
-                  ICM_sample_num++;
-              }
-              else if(ICM_buffer_mode == ICM_BUFFER_B) {
-                  ICM_bufferB[count++] = (uint16_t) 9;
-                  ICM_bufferB[count++] = (uint16_t) 9;
-                  ICM_bufferB[count++] = (uint16_t) 0;
-                  ICM_bufferB[count++] = (uint16_t) 5;
-                  ICM_bufferB[count++] = (uint16_t) 0;
-                  ICM_bufferB[count++] = (uint16_t) 6;
-                  ICM_sample_num++;
-              }
+               ICM_bufferA[count++] = (uint16_t) accel_axises.x + 1;
+               ICM_bufferA[count++] = (uint16_t) accel_axises.y + 1;
+               ICM_bufferA[count++] = (uint16_t) accel_axises.z + 1;
+               ICM_bufferA[count++] = (uint16_t) gyro_axises.x + 1;
+               ICM_bufferA[count++] = (uint16_t) gyro_axises.y + 1;
+               ICM_bufferA[count++] = (uint16_t) gyro_axises.z + 1;
+               ICM_sample_num++;
+           }
+           else if(ICM_buffer_mode == ICM_BUFFER_B) {
+               ICM_bufferB[count++] = (uint16_t) accel_axises.x + 1;
+               ICM_bufferB[count++] = (uint16_t) accel_axises.y + 1;
+               ICM_bufferB[count++] = (uint16_t) accel_axises.z + 1;
+               ICM_bufferB[count++] = (uint16_t) gyro_axises.x + 1;
+               ICM_bufferB[count++] = (uint16_t) gyro_axises.y + 1;
+               ICM_bufferB[count++] = (uint16_t) gyro_axises.z + 1;
+               ICM_sample_num++;
+           }
+//           if(ICM_buffer_mode == ICM_BUFFER_A) {
+//                  ICM_bufferA[count++] = (uint16_t) 9;
+//                  ICM_bufferA[count++] = (uint16_t) 9;
+//                  ICM_bufferA[count++] = (uint16_t) 9;
+//                  ICM_bufferA[count++] = (uint16_t) 9;
+//                  ICM_bufferA[count++] = (uint16_t) 9;
+//                  ICM_bufferA[count++] = (uint16_t) 9;
+//                  ICM_sample_num++;
+//              }
+//              else if(ICM_buffer_mode == ICM_BUFFER_B) {
+//                  ICM_bufferB[count++] = (uint16_t) 1;
+//                  ICM_bufferB[count++] = (uint16_t) 2;
+//                  ICM_bufferB[count++] = (uint16_t) 3;
+//                  ICM_bufferB[count++] = (uint16_t) 4;
+//                  ICM_bufferB[count++] = (uint16_t) 5;
+//                  ICM_bufferB[count++] = (uint16_t) 6;
+//                  ICM_sample_num++;
+//              }
            if(count >= ICM_buffer_size - 12) { // check if count equals buffer_size, or if the buffer is full
                ICM_buffer_len = count;
                count = 0;
@@ -1466,12 +1455,12 @@ int main(void)
 #ifdef DEBUG
     UARTprintf("Store count in each file: %d\n", store_count);
 #endif
+//TODO: IMPORTANT: Prefix was wrong
+    // Headstage SPI init
+    SPI_init();
 
     // ICM SPI init
-    ICM_SPI_init();
-
-    // Headstage SPI init
-    SPIInit();
+    ICM_SPIInit();
     ROM_SysCtlDelay(SysCtlClockGet()/3);
 
 

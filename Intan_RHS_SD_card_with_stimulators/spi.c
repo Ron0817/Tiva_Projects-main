@@ -15,7 +15,7 @@
 #include "driverlib/rom.h"
 
 
-void SPIInit(void)
+void ICM_SPIInit(void)
 {
 	uint32_t ui32ResidualData;
 	// enable SSI3 and GPIOD peripherals
