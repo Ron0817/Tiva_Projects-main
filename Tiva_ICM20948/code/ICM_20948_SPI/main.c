@@ -137,28 +137,7 @@ void Timer5IntHandler(void)
     icm20948_gyro_read_dps(&gyro_axises);
     icm20948_accel_read_g(&accel_axises);
 
-    // Interesting findings that the following sprintf() doesn't work in this ISR.
-    // Reasons might be that it hangs the ISR and takes too long time.
-    // A workaround was made to hardcode the sign of gyro and accel readings
-//    ret_val = (uint16_t) gyro_axises.x < 0x1fff ? sprintf(gyro_axises_str.x, "%d", (uint16_t) gyro_axises.x)
-//            : sprintf(gyro_axises_str.x, "-%d", 0xffff - (uint16_t) gyro_axises.x);
-//    ret_val = (uint16_t) gyro_axises.y < 0x1fff ? sprintf(gyro_axises_str.y, "%d", (uint16_t) gyro_axises.y)
-//            : sprintf(gyro_axises_str.y, "-%d", 0xffff - (uint16_t) gyro_axises.y);
-//    ret_val = (uint16_t) gyro_axises.z < 0x1fff ? sprintf(gyro_axises_str.z, "%d", (uint16_t) gyro_axises.z)
-//            : sprintf(gyro_axises_str.z, "-%d", 0xffff - (uint16_t) gyro_axises.z);
-//
-//    ret_val = (uint16_t) accel_axises.x < 0x1fff ? sprintf(accel_axises_str.x, "%d", (uint16_t) accel_axises.x)
-//            : sprintf(accel_axises_str.x, "-%d", 0xffff - (uint16_t) accel_axises.x);
-//    ret_val = (uint16_t) accel_axises.y < 0x1fff ? sprintf(accel_axises_str.y, "%d", (uint16_t) accel_axises.y)
-//            : sprintf(accel_axises_str.y, "-%d", 0xffff - (uint16_t) accel_axises.y);
-//    ret_val = (uint16_t) accel_axises.z < 0x1fff ? sprintf(accel_axises_str.z, "%d", (uint16_t) accel_axises.z)
-//            : sprintf(accel_axises_str.z, "-%d", 0xffff - (uint16_t) accel_axises.z);
-
-//    UARTprintf("gyro_val (x, y, z) = (%s,\t%s,\t%s) \t", gyro_axises_str.x, gyro_axises_str.y, gyro_axises_str.z);
-//    UARTprintf("accel_val (x, y, z) = (%s,\t%s,\t%s) \n", accel_axises_str.x, accel_axises_str.y, accel_axises_str.z);
-
-    // Convert 2's comp num and print
-
+    // Convert 2's comp num and print - sprintf() does not work here
     (uint16_t) accel_axises.x < 0x1fff ? strcpy(accel_sign.x, "+") : strcpy(accel_sign.x, "-");
     (uint16_t) accel_axises.y < 0x1fff ? strcpy(accel_sign.y, "+") : strcpy(accel_sign.y, "-");
     (uint16_t) accel_axises.z < 0x1fff ? strcpy(accel_sign.z, "+") : strcpy(accel_sign.z, "-");
@@ -261,12 +240,12 @@ void count_to_message(uint32_t count_val, uint32_t ui32TxBuffer[MAX_PLOAD]){
 
 // Pushbutton init - Only SW1(PF4) enabled as SW2(PF0) conflict with MISO1
 void SW_int_init(void){
-// Remove the 2 present on Switch SW2 (connected to PF0) and commit the change
+// Remove the lock present on Switch SW2 (connected to PF0) and commit the change
    HWREG(GPIO_PORTF_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY;
    HWREG(GPIO_PORTF_BASE + GPIO_O_CR) |= GPIO_PIN_4;
 
-   // Set the System clock to 80MHz and enable the clock for peripheral PortF.
-   SysCtlClockSet(SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
+   // Set the System clock to 50MHz and enable the clock for peripheral PortF.
+      ROM_SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_INT | SYSCTL_MAIN_OSC_DIS); // 50MHz System Clock
 
    // Configure input for PF4(SW1) and PF0(SW2)
    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
@@ -310,7 +289,9 @@ int main(void)
 //    axises_str accel_axises_str;
 
     // Setup the system clock to run at ?? Mhz from PLL with external oscillator
-    ROM_SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
+//    ROM_SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
+
+    ROM_SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_INT | SYSCTL_MAIN_OSC_DIS); // 50MHz System Clock
 
     // Launchpad Board
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
@@ -339,6 +320,8 @@ int main(void)
     ROM_GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, LED_R | LED_G);
     ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_R, LED_R);
     ROM_GPIOPinWrite(GPIO_PORTA_BASE, LED_G, LED_G);
+
+
 
     // mount the SD Card using logical drive 0.
 //    rc = f_mount(0, &fatfs);
@@ -389,7 +372,8 @@ int main(void)
     SW_int_init();
 
     /* ------------------------------------          Accel and Gyro init        ---------------------------------- */
-    ret = icm20948_who_am_i();
+//    ret = icm20948_who_am_i();
+    ret = ICM_SPI_Read(0x0);
     UARTprintf("ICM20948 is 0xea ? -> 0x%x\n", ret);
     icm20948_init();
 
