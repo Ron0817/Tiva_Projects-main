@@ -1455,7 +1455,6 @@ int main(void)
 #ifdef DEBUG
     UARTprintf("Store count in each file: %d\n", store_count);
 #endif
-//TODO: IMPORTANT: Prefix was wrong
     // Headstage SPI init
     SPI_init();
 
