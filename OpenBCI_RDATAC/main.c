@@ -94,8 +94,9 @@ main(void)
     while(!stop)
     {
 
-        ADS1299_RREG(ADS1299_ID);
+//        ADS1299_RREG(ADS1299_ID);
 //        ADS1299_Init();
+        ADS1299_RDATA();
         //
         // Turn on the LED.
         //

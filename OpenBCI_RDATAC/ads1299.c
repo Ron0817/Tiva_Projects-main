@@ -24,7 +24,7 @@ void ADS1299_SPI_Init(void)
     // Configure and enable SSI port
     // Use internal 16Mhz RC oscillator as SSI clock source
     ROM_SSIClockSourceSet(SPI_BASE, SSI_CLOCK_PIOSC);
-    ROM_SSIConfigSetExpClk(SPI_BASE, 2000000, SSI_FRF_MOTO_MODE_1, SSI_MODE_MASTER, 1000000, 8);
+    ROM_SSIConfigSetExpClk(SPI_BASE, ROM_SysCtlClockGet(), SSI_FRF_MOTO_MODE_1, SSI_MODE_MASTER, 2000000, 8);
     ROM_SSIEnable(SPI_BASE);
 
     // Read any residual data on the SSI port to clear buffer
@@ -166,6 +166,9 @@ uint32_t ADS1299_RREG(uint32_t ui32Register)
     SPIDataWrite(0xFF);
     SPIDataWrite(0xFF);
 
+    // Wait some clocks for spi read back
+    ROM_SysCtlDelay(ROM_SysCtlClockGet()/300000);
+
     ROM_GPIOPinWrite(CS_BASE, CSN, CSN);
     return readVal;
 }
@@ -198,20 +201,28 @@ void ADS1299_WREG(uint32_t ui32Register, uint32_t ui32Data)
     // Write data
     SPIDataWrite(ui32Data);
 
-    // Wait 4 tclks
-    ROM_SysCtlDelay(ROM_SysCtlClockGet()/3000000);
+    // Wait some clocks for spi write
+    ROM_SysCtlDelay(ROM_SysCtlClockGet()/300000);
 
     ROM_GPIOPinWrite(CS_BASE, CSN, CSN);
 }
 
 void ADS1299_RDATA()
 {
+    int i;
+
     // Send RDATA Command
     ROM_GPIOPinWrite(CS_BASE, CSN, 0);
     SPIDataWrite(ADS1299_RDATA_CMD);
 
-    // Provide 24 bits status reg + 8 *
-    SPIDataWrite(0x00);
+    // Provide 24 bits status reg + 8 * 24 btis readings
+    for (i = 0; i < 27; i++)
+    {
+        SPIDataWrite(0x00);
+    }
+
+    ROM_SysCtlDelay(ROM_SysCtlClockGet()/100000);
+
     ROM_GPIOPinWrite(CS_BASE, CSN, CSN);
 
 }
