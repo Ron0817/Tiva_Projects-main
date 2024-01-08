@@ -21,7 +21,7 @@
 #define ADS1299_BIAS_SENSP     0x0D
 #define ADS1299_BIAS_SENSN     0x0E
 #define ADS1299_LOFF_SENSP     0x0F
-#define ADS1299_LOFF_SENSP     0x10
+#define ADS1299_LOFF_SENSN     0x10
 #define ADS1299_LOFF_FLIP      0x11
 
 //Lead-Off Status Register(read only)

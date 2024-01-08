@@ -1,5 +1,4 @@
 #include "ads1299.h"
-#include "spi.h"
 
 //#define 18TCLKS_PLACEHOLDER 300000
 //#define 4TCLKS_PLACEHOLDER 30000
@@ -32,29 +31,6 @@ void ADS1299_SPI_Init(void)
     {
 
     }
-}
-
-// Initialize ADS1299 for ReadReg Command
-void ADS1299_Init_ReadReg(void)
-{
-    // Send Reset Command
-    ROM_GPIOPinWrite(CS_BASE, CSN, 0);
-    SPIDataWrite(ADS1299_RESET_CMD);
-    ROM_SysCtlDelay(ROM_SysCtlClockGet()/3000000);
-    ROM_GPIOPinWrite(CS_BASE, CSN, CSN);
-
-    // Wait 18 tclks
-    ROM_SysCtlDelay(ROM_SysCtlClockGet()/300000);
-
-    // Send SDATAC Command
-    ROM_GPIOPinWrite(CS_BASE, CSN, 0);
-    SPIDataWrite(ADS1299_SDATAC_CMD);
-    ROM_SysCtlDelay(ROM_SysCtlClockGet()/3000000);
-    ROM_GPIOPinWrite(CS_BASE, CSN, CSN);
-
-    // Wait 4 tclks
-    ROM_SysCtlDelay(ROM_SysCtlClockGet()/3000000);
-
 }
 
 // Initialize ADS1299 for ReadReg Command
@@ -96,7 +72,7 @@ void ADS1299_Init(void)
     // Wait 4 tclks
     ROM_SysCtlDelay(ROM_SysCtlClockGet()/3000000);
 
-    // Write CHnSET 0x01 to set all channels to input short
+    // Write CHnSET 0x01 to set all channels to input short - TODOs: Use WREG MULT command
     ADS1299_WREG(ADS1299_CH1SET, 0x01);
     ADS1299_WREG(ADS1299_CH2SET, 0x01);
     ADS1299_WREG(ADS1299_CH3SET, 0x01);
@@ -124,7 +100,37 @@ void ADS1299_Init(void)
     ROM_SysCtlDelay(ROM_SysCtlClockGet()/3000000);
     ROM_GPIOPinWrite(CS_BASE, CSN, CSN);
 
+}
 
+void ADS1299_Test_Signal(void)
+{
+    // SDATAC
+    ROM_GPIOPinWrite(CS_BASE, CSN, 0);
+    SPIDataWrite(ADS1299_SDATAC_CMD);
+    ROM_SysCtlDelay(ROM_SysCtlClockGet()/3000000);
+    ROM_GPIOPinWrite(CS_BASE, CSN, CSN);
+
+    // Wait 4 tclks
+    ROM_SysCtlDelay(ROM_SysCtlClockGet()/3000000);
+
+    // WREG CONFIG2 D0h
+    ADS1299_WREG(ADS1299_CONFIG2, 0xD0);
+
+    // WREG CHnSET 05h
+    ADS1299_WREG(ADS1299_CH1SET, 0x05);
+    ADS1299_WREG(ADS1299_CH2SET, 0x05);
+    ADS1299_WREG(ADS1299_CH3SET, 0x05);
+    ADS1299_WREG(ADS1299_CH4SET, 0x05);
+    ADS1299_WREG(ADS1299_CH5SET, 0x05);
+    ADS1299_WREG(ADS1299_CH6SET, 0x05);
+    ADS1299_WREG(ADS1299_CH7SET, 0x05);
+    ADS1299_WREG(ADS1299_CH8SET, 0x05);
+
+    // RDATAC
+    ROM_GPIOPinWrite(CS_BASE, CSN, 0);
+    SPIDataWrite(ADS1299_RDATAC_CMD);
+    ROM_SysCtlDelay(ROM_SysCtlClockGet()/3000000);
+    ROM_GPIOPinWrite(CS_BASE, CSN, CSN);
 
 
 }
@@ -201,7 +207,7 @@ void ADS1299_WREG(uint32_t ui32Register, uint32_t ui32Data)
     // Write data
     SPIDataWrite(ui32Data);
 
-    // Wait some clocks for spi write
+    // Wait some clocks for spi to write
     ROM_SysCtlDelay(ROM_SysCtlClockGet()/300000);
 
     ROM_GPIOPinWrite(CS_BASE, CSN, CSN);
@@ -210,6 +216,7 @@ void ADS1299_WREG(uint32_t ui32Register, uint32_t ui32Data)
 void ADS1299_RDATA()
 {
     int i;
+    uint32_t ui32DataRx[27] = {0};
 
     // Send RDATA Command
     ROM_GPIOPinWrite(CS_BASE, CSN, 0);
@@ -219,7 +226,12 @@ void ADS1299_RDATA()
     for (i = 0; i < 27; i++)
     {
         SPIDataWrite(0x00);
+        ui32DataRx[i] = SPIDataRead();
     }
+
+//    UARTprintf("new data read: ");
+//    for (i = 0; i < 27; i++) UARTprintf("%d ", ui32DataRx[i]);
+//    UARTprintf("\n");
 
     ROM_SysCtlDelay(ROM_SysCtlClockGet()/100000);
 

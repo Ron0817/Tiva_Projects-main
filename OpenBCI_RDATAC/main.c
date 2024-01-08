@@ -31,7 +31,6 @@
 
 #include "spi.h"
 #include "ads1299.h"
-#include "ads1299_reg.h"
 
 //*****************************************************************************
 //
@@ -90,6 +89,9 @@ main(void)
     // Initialize ADS1299
     ADS1299_Init();
 
+    // Set ADS1299 to output square signal
+    ADS1299_Test_Signal();
+
     int stop = 0;
     while(!stop)
     {
@@ -97,6 +99,7 @@ main(void)
 //        ADS1299_RREG(ADS1299_ID);
 //        ADS1299_Init();
         ADS1299_RDATA();
+
         //
         // Turn on the LED.
         //
@@ -105,7 +108,7 @@ main(void)
         //
         // Delay for a bit.
         //
-        for(ui32Loop = 0; ui32Loop < 200000; ui32Loop++)
+        for(ui32Loop = 0; ui32Loop < 100000; ui32Loop++)
         {
         }
         //
@@ -116,7 +119,7 @@ main(void)
         //
         // Delay for a bit.
         //
-        for(ui32Loop = 0; ui32Loop < 200000; ui32Loop++)
+        for(ui32Loop = 0; ui32Loop < 100000; ui32Loop++)
         {
         }
     }

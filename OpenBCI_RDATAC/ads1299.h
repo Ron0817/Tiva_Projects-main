@@ -2,6 +2,8 @@
 #include  "ads1299_reg.h"
 #include "spi.h"
 
+
+
 //System CMD
 //wake-up from standby mode
 #define ADS1299_WAKEUP_CMD 0x02
@@ -30,10 +32,9 @@
 
 void ADS1299_SPI_Init(void);
 
-// TODOs: To be deleted
-void ADS1299_Init_ReadReg(void);
-
 void ADS1299_init(void);
+
+void ADS1299_Test_Signal(void);
 
 // TODOs: Change uint32_t to uint8_t
 void ADS1299_SPI_Write(uint32_t ui32Register, uint32_t ui32Value);
